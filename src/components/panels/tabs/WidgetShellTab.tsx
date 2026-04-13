@@ -25,7 +25,7 @@ const ColorPicker: React.FC<{ value: string; onChange: (v: string) => void }> = 
 };
 
 export const WidgetShellTab: React.FC = () => {
-  const { theme, updateWidgetBase } = useThemeStore();
+  const { theme, updateWidgetBase, globalTokens, setGlobalTokens } = useThemeStore();
 
   const base = theme.WidgetStyles.$values[0];
   if (!base) return null;
@@ -79,8 +79,8 @@ export const WidgetShellTab: React.FC = () => {
           <span className="detail-label">Font</span>
           <select
             className="control-select"
-            value={titleFont}
-            onChange={(e) => updateWidgetBase('Title.TextStyle.FontFamily', e.target.value)}
+            value={globalTokens.titleFontFamily}
+            onChange={(e) => setGlobalTokens({ titleFontFamily: e.target.value })}
           >
             {fonts.map((f) => <option key={f} value={f}>{f}</option>)}
           </select>
@@ -93,11 +93,11 @@ export const WidgetShellTab: React.FC = () => {
             className="detail-slider"
             min={12}
             max={32}
-            value={titleSize}
-            onChange={(e) => updateWidgetBase('Title.TextStyle.FontSize', Number(e.target.value))}
+            value={globalTokens.titleFontSize}
+            onChange={(e) => setGlobalTokens({ titleFontSize: Number(e.target.value) })}
             style={{ width: '120px' }}
           />
-          <span className="control-value">{titleSize}px</span>
+          <span className="control-value">{globalTokens.titleFontSize}px</span>
         </div>
 
         <div className="detail-row">
@@ -186,11 +186,11 @@ export const WidgetShellTab: React.FC = () => {
             className="detail-slider"
             min={0}
             max={16}
-            value={frameRadius}
-            onChange={(e) => updateWidgetBase('Frame.Style.Radius', Number(e.target.value))}
+            value={globalTokens.borderRadius}
+            onChange={(e) => setGlobalTokens({ borderRadius: Number(e.target.value) })}
             style={{ width: '120px' }}
           />
-          <span className="control-value">{frameRadius}px</span>
+          <span className="control-value">{globalTokens.borderRadius}px</span>
         </div>
       </div>
 

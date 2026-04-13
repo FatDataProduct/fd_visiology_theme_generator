@@ -34,6 +34,14 @@ export const FilterStylerTab: React.FC = () => {
 
   return (
     <>
+      <div
+        className="detail-section"
+        style={{ minWidth: 240, justifyContent: 'center', alignItems: 'center', background: 'rgba(255,200,50,0.05)', borderColor: 'rgba(255,200,50,0.2)' }}
+      >
+        <div style={{ fontSize: 9, color: 'rgba(255,200,50,0.7)', textAlign: 'center', padding: '4px 0', lineHeight: 1.5 }}>
+          ⚠ Настройки фильтра сохраняются<br />в экспортируемый JSON,<br />но не отображаются в превью.
+        </div>
+      </div>
       <div className="detail-section">
         <div className="detail-section__title">Filter</div>
         <div className="detail-row">

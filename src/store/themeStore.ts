@@ -15,7 +15,7 @@ import {
 export type ThemeMode = 'light' | 'dark';
 export type PreviewBackground = 'white' | 'gray' | 'dark';
 export type DetailTab = 'shell' | 'chart' | 'table' | 'indicator' | 'filter';
-export type PreviewSheet = 1 | 2 | 3;
+export type PreviewSheet = 'echarts' | 'visapi';
 
 interface ThemeState {
   themeName: string;
@@ -129,7 +129,7 @@ export const useThemeStore = create<ThemeState>((set, get) => ({
   previewBackground: 'white',
   showGrid: false,
   activeDetailTab: 'shell',
-  activeSheet: 1,
+  activeSheet: 'echarts',
   isDirty: false,
 
   setThemeName: (name) => set({ themeName: name, isDirty: true }),
@@ -147,7 +147,10 @@ export const useThemeStore = create<ThemeState>((set, get) => ({
     get().setPalette(newPalette);
   },
 
-  setSeedColor: (color) => set({ seedColor: color }),
+  setSeedColor: (color) => {
+    set({ seedColor: color });
+    get().generatePalette();
+  },
 
   setSeedIndex: (index) => {
     const { palette } = get();
@@ -159,10 +162,12 @@ export const useThemeStore = create<ThemeState>((set, get) => ({
   setPaletteSize: (size) => {
     const clamped = Math.max(3, Math.min(10, size));
     set({ paletteSize: clamped });
+    get().generatePalette();
   },
 
   setHarmonyMethod: (method) => {
     set({ harmonyMethod: method });
+    get().generatePalette();
   },
 
   setRefinement: (partial) => {
