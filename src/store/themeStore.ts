@@ -17,6 +17,8 @@ export type PreviewBackground = 'white' | 'gray' | 'dark';
 export type DetailTab = 'shell' | 'chart' | 'table' | 'indicator' | 'filter';
 export type PreviewSheet = 'echarts' | 'visapi';
 
+const DEFAULT_VISAPI_URL = (import.meta.env.VITE_VISAPI_IFRAME_URL as string | undefined)?.trim() ?? '';
+
 interface ThemeState {
   themeName: string;
   theme: VisiologyTheme;
@@ -34,6 +36,8 @@ interface ThemeState {
   showGrid: boolean;
   activeDetailTab: DetailTab;
   activeSheet: PreviewSheet;
+  visApiUrl: string;
+  visApiTargetOrigin: string;
   isDirty: boolean;
 
   setThemeName: (name: string) => void;
@@ -56,6 +60,7 @@ interface ThemeState {
   setShowGrid: (show: boolean) => void;
   setActiveDetailTab: (tab: DetailTab) => void;
   setActiveSheet: (sheet: PreviewSheet) => void;
+  setVisApiUrl: (url: string) => void;
 
   updateWidgetBase: (path: string, value: unknown) => void;
   getExportTheme: () => VisiologyTheme;
@@ -113,6 +118,15 @@ function syncPaletteToTheme(theme: VisiologyTheme, palette: PaletteColor[], seed
   return applyPaletteToTheme(theme, filled);
 }
 
+function getOriginFromUrl(url: string): string {
+  if (!url) return '';
+  try {
+    return new URL(url).origin;
+  } catch {
+    return '';
+  }
+}
+
 export const useThemeStore = create<ThemeState>((set, get) => ({
   themeName: 'Энергия Visiology',
   theme: getDefaultTheme(),
@@ -130,6 +144,8 @@ export const useThemeStore = create<ThemeState>((set, get) => ({
   showGrid: false,
   activeDetailTab: 'shell',
   activeSheet: 'echarts',
+  visApiUrl: DEFAULT_VISAPI_URL,
+  visApiTargetOrigin: getOriginFromUrl(DEFAULT_VISAPI_URL),
   isDirty: false,
 
   setThemeName: (name) => set({ themeName: name, isDirty: true }),
@@ -250,6 +266,14 @@ export const useThemeStore = create<ThemeState>((set, get) => ({
   setShowGrid: (show) => set({ showGrid: show }),
   setActiveDetailTab: (tab) => set({ activeDetailTab: tab }),
   setActiveSheet: (sheet) => set({ activeSheet: sheet }),
+  setVisApiUrl: (url) => {
+    const normalized = url.trim();
+    set({
+      visApiUrl: normalized,
+      visApiTargetOrigin: getOriginFromUrl(normalized),
+      // Do NOT auto-switch sheet — user switches manually via sheet buttons
+    });
+  },
 
   updateWidgetBase: (path, value) => {
     const { theme } = get();
@@ -269,12 +293,30 @@ export const useThemeStore = create<ThemeState>((set, get) => ({
   },
 
   importTheme: (theme, palette, name) => {
+    // Extract globalTokens from the imported theme so UI controls stay in sync
+    const base = theme.WidgetStyles?.$values?.[0];
+    const extractedTokens: GlobalTokens = {
+      titleFontFamily: base?.Title?.TextStyle?.FontFamily ?? DEFAULT_GLOBAL_TOKENS.titleFontFamily,
+      dataFontFamily: DEFAULT_GLOBAL_TOKENS.dataFontFamily,
+      titleFontSize: base?.Title?.TextStyle?.FontSize ?? DEFAULT_GLOBAL_TOKENS.titleFontSize,
+      lineHeight: base?.Title?.TextStyle?.LineHeight ?? DEFAULT_GLOBAL_TOKENS.lineHeight,
+      borderRadius: base?.Frame?.Style?.Radius ?? DEFAULT_GLOBAL_TOKENS.borderRadius,
+    };
+    // Auto-detect dark mode from background colour
+    const bgColor = base?.Background?.Color?.Color ?? '';
+    let detectedMode: ThemeMode = 'light';
+    const rgbMatch = bgColor.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/);
+    if (rgbMatch) {
+      const luminance = (0.299 * +rgbMatch[1] + 0.587 * +rgbMatch[2] + 0.114 * +rgbMatch[3]);
+      if (luminance < 128) detectedMode = 'dark';
+    }
     set({
       theme,
       palette,
       themeName: name,
+      globalTokens: extractedTokens,
       isDirty: false,
-      mode: 'light',
+      mode: detectedMode,
       refinement: { ...DEFAULT_REFINEMENT },
       lockedIndices: new Set<number>(),
     });
@@ -293,6 +335,8 @@ export const useThemeStore = create<ThemeState>((set, get) => ({
       lockedIndices: new Set<number>(),
       mode: 'light',
       globalTokens: { ...DEFAULT_GLOBAL_TOKENS },
+      visApiUrl: DEFAULT_VISAPI_URL,
+      visApiTargetOrigin: getOriginFromUrl(DEFAULT_VISAPI_URL),
       isDirty: false,
     });
   },

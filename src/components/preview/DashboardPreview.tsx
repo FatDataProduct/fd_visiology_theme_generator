@@ -129,7 +129,7 @@ interface EChartProps {
   style?: React.CSSProperties;
 }
 
-const EChart = React.memo<EChartProps>(({ option, style }) => {
+const EChart: React.FC<EChartProps> = ({ option, style }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<echarts.ECharts | null>(null);
 
@@ -147,12 +147,13 @@ const EChart = React.memo<EChartProps>(({ option, style }) => {
     };
   }, []);
 
+  // Run on every render — guarantees ECharts always reflects latest state
   useEffect(() => {
-    chartRef.current?.setOption(option, { notMerge: true, lazyUpdate: true });
-  }, [option]);
+    chartRef.current?.setOption(option, { notMerge: true });
+  });
 
   return <div ref={containerRef} style={style} />;
-});
+};
 
 /* ================================================================
    THEME HOOK — extracts all display properties from Zustand store
@@ -171,9 +172,14 @@ function useWidgetStyles() {
 
   return {
     paletteColors,
-    bgColor: base?.Background?.Enabled
-      ? (base.Background?.Color?.Color ?? (mode === 'dark' ? 'rgba(30,30,46,0.95)' : 'rgba(255,255,255,0.95)'))
-      : (mode === 'dark' ? 'rgba(30,30,46,0.95)' : 'rgba(255,255,255,0.95)'),
+    bgColor: (() => {
+      const c = base?.Background?.Color?.Color;
+      const fallback = mode === 'dark' ? 'rgba(30,30,46,0.95)' : 'rgba(255,255,255,0.95)';
+      if (!c) return fallback;
+      // Treat fully transparent as "no color set"
+      if (/rgba\([^)]*,\s*0(\.0+)?\s*\)$/i.test(c)) return fallback;
+      return c;
+    })(),
     frameEnabled: base?.Frame?.Enabled ?? false,
     frameColor: base?.Frame?.Style?.Color ?? 'rgba(128,128,128,0.5)',
     frameRadius: base?.Frame?.Style?.Radius ?? globalTokens.borderRadius,
@@ -233,6 +239,70 @@ function useWidgetStyles() {
     dataFont: globalTokens.dataFontFamily,
     showGrid,
     mode,
+
+    // ── Widget title extras ──────────────────────────────────────────
+    titleEnabled: base?.Title?.Enabled ?? true,
+    titleItalic: base?.Title?.TextStyle?.IsItalic ?? false,
+    titleAlign: (base?.Title?.TextStyle?.Align ?? 1) as number,   // 0=left 1=center 2=right
+    titleBgEnabled: base?.Title?.Background?.Enabled ?? false,
+    titleBgColor: base?.Title?.Background?.Color?.Color ?? 'transparent',
+
+    // ── Chart axis extras ────────────────────────────────────────────
+    yAxisEnabled: chartWidget
+      ? (getVal(chartWidget, 'YAxis.Enabled', true) as boolean)
+      : true,
+    yAxisLineEnabled: chartWidget
+      ? (getVal(chartWidget, 'YAxis.LineEnabled', false) as boolean)
+      : false,
+    yAxisLabelSize: chartWidget
+      ? (getVal(chartWidget, 'YAxis.Labels.TextStyle.FontSize', 12) as number)
+      : 12,
+    xAxisLineEnabled: chartWidget
+      ? (getVal(chartWidget, 'XAxis.LineEnabled', false) as boolean)
+      : false,
+    xAxisLabelSize: chartWidget
+      ? (getVal(chartWidget, 'XAxis.Labels.TextStyle.FontSize', 12) as number)
+      : 12,
+    xAxisRotation: chartWidget
+      ? (getVal(chartWidget, 'XAxis.Labels.RotationAngle', 0) as number)
+      : 0,
+    legendFontSize: chartWidget
+      ? (getVal(chartWidget, 'Legend.TextStyle.FontSize', 12) as number)
+      : 12,
+    legendPosition: chartWidget
+      ? (getVal(chartWidget, 'Legend.VerticalAlign', 0) as number)
+      : 0,   // 0=Top 2=Bottom 1=Left 3=Right (Visiology enum)
+    dataLabelsEnabled: chartWidget
+      ? (getVal(chartWidget, 'DataLabels.Enabled', false) as boolean)
+      : false,
+    dataLabelsColor: chartWidget
+      ? (getVal(chartWidget, 'DataLabels.TextStyle.Color', 'rgb(73,80,87)') as string)
+      : 'rgb(73,80,87)',
+    columnWidth: chartWidget
+      ? (getVal(chartWidget, 'Column.Width', 20) as number)
+      : 20,
+
+    // ── Table border extras ──────────────────────────────────────────
+    dgOuterBorderColor: dgWidget
+      ? (getVal(dgWidget, 'DataGridStyle.OuterBorder.Color.Color', 'rgba(101,210,228,0.5)') as string)
+      : 'rgba(101,210,228,0.5)',
+    dgHorizBorderColor: dgWidget
+      ? (getVal(dgWidget, 'DataGridStyle.InnerHorizontalBorder.Color.Color', 'rgba(0,0,0,0.06)') as string)
+      : 'rgba(0,0,0,0.06)',
+    dgVertBorderColor: dgWidget
+      ? (getVal(dgWidget, 'DataGridStyle.InnerVerticalBorder.Color.Color', 'rgba(0,0,0,0.04)') as string)
+      : 'rgba(0,0,0,0.04)',
+
+    // ── KPI / Indicator extras ───────────────────────────────────────
+    indValueFontSize: indicatorWidget
+      ? (getVal(indicatorWidget, 'ValueSettings.TextStyle.FontSize', 52) as number)
+      : 52,
+    indValueBold: indicatorWidget
+      ? (getVal(indicatorWidget, 'ValueSettings.TextStyle.IsBold', false) as boolean)
+      : false,
+    indNeutralColor: indicatorWidget
+      ? (getVal(indicatorWidget, 'TrendSettings.NeutralTrendDetails.Color', 'rgb(199,152,7)') as string)
+      : 'rgb(199,152,7)',
   };
 }
 
@@ -267,23 +337,36 @@ const WidgetCard: React.FC<{
         ...style,
       }}
     >
-      <div style={{ padding: '6px 10px 2px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexShrink: 0 }}>
-        <div>
-          <div
-            style={{
-              color: s.titleColor,
-              fontFamily: s.titleFont,
-              fontSize: Math.min(s.titleSize * 0.55, 13),
-              fontWeight: s.titleBold ? 700 : 400,
-              lineHeight: 1.3,
-            }}
-          >
-            {title}
+      {s.titleEnabled !== false && (
+        <div
+          style={{
+            padding: '6px 10px 2px',
+            background: s.titleBgEnabled ? s.titleBgColor : 'transparent',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'flex-start',
+            flexShrink: 0,
+          }}
+        >
+          <div style={{ flex: 1 }}>
+            <div
+              style={{
+                color: s.titleColor,
+                fontFamily: s.titleFont,
+                fontSize: Math.min(s.titleSize * 0.55, 13),
+                fontWeight: s.titleBold ? 700 : 400,
+                fontStyle: s.titleItalic ? 'italic' : 'normal',
+                textAlign: s.titleAlign === 0 ? 'left' : s.titleAlign === 2 ? 'right' : 'center',
+                lineHeight: 1.3,
+              }}
+            >
+              {title}
+            </div>
+            {subtitle && <div style={{ color: s.axisLabelColor, fontSize: 9, marginTop: 1 }}>{subtitle}</div>}
           </div>
-          {subtitle && <div style={{ color: s.axisLabelColor, fontSize: 9, marginTop: 1 }}>{subtitle}</div>}
+          {headerRight}
         </div>
-        {headerRight}
-      </div>
+      )}
       <div style={{ flex: 1, minHeight: 0, position: 'relative' }}>{children}</div>
     </div>
   );
@@ -438,7 +521,7 @@ const KPIRow: React.FC = () => {
       <div style={{ flex: 5, padding: '8px 12px', display: 'flex', gap: 10, alignItems: 'center' }}>
         <div style={{ flexShrink: 0 }}>
           <div style={{ fontSize: 9, color: s.axisLabelColor }}>Продажи</div>
-          <div style={{ fontSize: 22, fontWeight: 700, color: pc[0], fontFamily: s.titleFont, whiteSpace: 'nowrap' }}>
+          <div style={{ fontSize: Math.min(s.indValueFontSize * 0.42, 22), fontWeight: s.indValueBold ? 700 : 400, color: pc[0], fontFamily: s.titleFont, whiteSpace: 'nowrap' }}>
             1 807 645 ₽
           </div>
           <div style={{ fontSize: 8, color: s.axisLabelColor, lineHeight: 1.4 }}>
@@ -464,7 +547,7 @@ const KPIRow: React.FC = () => {
       {/* Plan completion */}
       <div style={{ flex: 3, padding: '8px 16px', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
         <div style={{ fontSize: 9, color: s.axisLabelColor }}>Выполнение плана</div>
-        <div style={{ fontSize: 26, fontWeight: 700, color: s.indValueColor, fontFamily: s.titleFont }}>78%</div>
+        <div style={{ fontSize: Math.min(s.indValueFontSize * 0.5, 26), fontWeight: s.indValueBold ? 700 : 400, color: s.indValueColor, fontFamily: s.titleFont }}>78%</div>
         <EChart option={progressOption} style={{ width: '100%', height: 24 }} />
       </div>
 
@@ -473,8 +556,8 @@ const KPIRow: React.FC = () => {
       {/* Profitability */}
       <div style={{ flex: 2, padding: '8px 16px', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'flex-end' }}>
         <div style={{ fontSize: 9, color: s.axisLabelColor }}>Доходность</div>
-        <div style={{ fontSize: 28, fontWeight: 700, color: s.titleColor, fontFamily: s.titleFont }}>12%</div>
-        <div style={{ fontSize: 9, color: s.indNegativeColor }}>▼ .7% YoY</div>
+        <div style={{ fontSize: Math.min(s.indValueFontSize * 0.54, 28), fontWeight: s.indValueBold ? 700 : 400, color: s.titleColor, fontFamily: s.titleFont }}>12%</div>
+        <div style={{ fontSize: 9, color: s.indNeutralColor }}>▼ .7% YoY</div>
       </div>
     </div>
   );
@@ -503,20 +586,20 @@ const TopSalesChart: React.FC = () => {
           type: 'bar',
           data: [...TOP_SALES].reverse().map((d) => d.value),
           itemStyle: { color: s.paletteColors[0] },
-          barWidth: 14,
+          barWidth: Math.max(8, Math.min(s.columnWidth * 0.3, 20)),
           label: {
-            show: true,
+            show: s.dataLabelsEnabled !== false,
             position: 'right',
             formatter: (p: { value: number }) => fmt(p.value) + ' ₽',
-            fontSize: 8,
-            color: s.paletteColors[0],
+            fontSize: Math.min(s.xAxisLabelSize * 0.55, 9),
+            color: s.dataLabelsEnabled ? s.dataLabelsColor : s.paletteColors[0],
             fontFamily: s.dataFont,
           },
         },
       ],
       tooltip: { show: false },
     }),
-    [s.paletteColors, s.axisLabelColor, s.dataFont],
+    [s.paletteColors, s.axisLabelColor, s.dataFont, s.dataLabelsEnabled, s.dataLabelsColor, s.columnWidth, s.xAxisLabelSize],
   );
 
   return (
@@ -525,6 +608,20 @@ const TopSalesChart: React.FC = () => {
     </WidgetCard>
   );
 };
+
+/* ================================================================
+   LEGEND PLACEMENT HELPER
+   Maps Visiology enum (0=Top, 1=Left, 2=Bottom, 3=Right) → ECharts position
+   ================================================================ */
+
+function legendPlacement(pos: number): Record<string, unknown> {
+  switch (pos) {
+    case 2: return { bottom: 0, left: 'center', orient: 'horizontal' };
+    case 1: return { left: 0, top: 'middle', orient: 'vertical' };
+    case 3: return { right: 0, top: 'middle', orient: 'vertical' };
+    default: return { top: 0, right: 0, orient: 'horizontal' }; // 0 = Top
+  }
+}
 
 /* ================================================================
    SALES LINE CHART
@@ -541,25 +638,31 @@ const SalesLineChart: React.FC = () => {
       xAxis: {
         type: 'category',
         data: MONTHS,
-        axisLabel: { color: s.xAxisLabelColor, fontSize: 7, interval: 5, fontFamily: s.dataFont },
-        axisLine: { lineStyle: { color: 'rgba(0,0,0,0.1)' } },
+        axisLabel: {
+          color: s.xAxisLabelColor,
+          fontSize: Math.min(s.xAxisLabelSize * 0.5, 8),
+          interval: 5,
+          fontFamily: s.dataFont,
+          rotate: s.xAxisRotation,
+        },
+        axisLine: { show: s.xAxisLineEnabled, lineStyle: { color: 'rgba(0,0,0,0.1)' } },
         axisTick: { show: false },
         boundaryGap: false,
       },
       yAxis: {
         type: 'value',
+        show: s.yAxisEnabled,
         min: 0,
         max: 2000,
-        axisLabel: { color: s.axisLabelColor, fontSize: 8, fontFamily: s.dataFont },
+        axisLabel: { color: s.axisLabelColor, fontSize: Math.min(s.yAxisLabelSize * 0.55, 9), fontFamily: s.dataFont },
         splitLine: { show: s.gridEnabled, lineStyle: { color: 'rgba(0,0,0,0.06)' } },
-        axisLine: { show: false },
+        axisLine: { show: s.yAxisLineEnabled },
       },
       legend: s.legendEnabled
         ? {
             show: true,
-            top: 0,
-            right: 0,
-            textStyle: { color: s.legendColor, fontSize: 8, fontFamily: s.dataFont },
+            ...legendPlacement(s.legendPosition),
+            textStyle: { color: s.legendColor, fontSize: Math.min(s.legendFontSize * 0.55, 9), fontFamily: s.dataFont },
           }
         : { show: false },
       series: [
@@ -580,6 +683,12 @@ const SalesLineChart: React.FC = () => {
               ],
             },
           },
+          label: {
+            show: s.dataLabelsEnabled,
+            color: s.dataLabelsColor,
+            fontSize: Math.min(s.xAxisLabelSize * 0.5, 8),
+            fontFamily: s.dataFont,
+          },
         },
         {
           name: 'Тренд',
@@ -591,7 +700,9 @@ const SalesLineChart: React.FC = () => {
         },
       ],
     }),
-    [pc, s.axisLabelColor, s.xAxisLabelColor, s.dataFont, s.gridEnabled, s.legendEnabled, s.legendColor],
+    [pc, s.axisLabelColor, s.xAxisLabelColor, s.dataFont, s.gridEnabled, s.legendEnabled, s.legendColor,
+      s.yAxisEnabled, s.yAxisLineEnabled, s.yAxisLabelSize, s.xAxisLineEnabled, s.xAxisLabelSize, s.xAxisRotation,
+      s.legendFontSize, s.legendPosition, s.dataLabelsEnabled, s.dataLabelsColor],
   );
 
   return (
@@ -625,15 +736,22 @@ const ProfitBarChart: React.FC = () => {
       xAxis: {
         type: 'category',
         data: MONTHS,
-        axisLabel: { color: s.xAxisLabelColor, fontSize: 7, interval: 5, fontFamily: s.dataFont },
-        axisLine: { lineStyle: { color: 'rgba(0,0,0,0.1)' } },
+        axisLabel: {
+          color: s.xAxisLabelColor,
+          fontSize: Math.min(s.xAxisLabelSize * 0.5, 8),
+          interval: 5,
+          fontFamily: s.dataFont,
+          rotate: s.xAxisRotation,
+        },
+        axisLine: { show: s.xAxisLineEnabled, lineStyle: { color: 'rgba(0,0,0,0.1)' } },
         axisTick: { show: false },
       },
       yAxis: {
         type: 'value',
-        axisLabel: { color: s.axisLabelColor, fontSize: 8, formatter: '{value}%', fontFamily: s.dataFont },
+        show: s.yAxisEnabled,
+        axisLabel: { color: s.axisLabelColor, fontSize: Math.min(s.yAxisLabelSize * 0.55, 9), formatter: '{value}%', fontFamily: s.dataFont },
         splitLine: { show: s.gridEnabled, lineStyle: { color: 'rgba(0,0,0,0.06)' } },
-        axisLine: { show: false },
+        axisLine: { show: s.yAxisLineEnabled },
       },
       series: [
         {
@@ -642,7 +760,15 @@ const ProfitBarChart: React.FC = () => {
             value: v,
             itemStyle: { color: v >= 0 ? s.indPositiveColor : s.indNegativeColor },
           })),
-          barWidth: '60%',
+          barWidth: `${Math.max(20, Math.min(s.columnWidth, 80))}%`,
+          label: {
+            show: s.dataLabelsEnabled,
+            position: 'top',
+            color: s.dataLabelsColor,
+            fontSize: Math.min(s.xAxisLabelSize * 0.5, 8),
+            fontFamily: s.dataFont,
+            formatter: '{c}%',
+          },
         },
       ],
       tooltip: {
@@ -653,7 +779,9 @@ const ProfitBarChart: React.FC = () => {
         },
       },
     }),
-    [s.paletteColors, s.axisLabelColor, s.xAxisLabelColor, s.dataFont, s.gridEnabled, s.indPositiveColor, s.indNegativeColor],
+    [s.paletteColors, s.axisLabelColor, s.xAxisLabelColor, s.dataFont, s.gridEnabled, s.indPositiveColor, s.indNegativeColor,
+      s.yAxisEnabled, s.yAxisLineEnabled, s.yAxisLabelSize, s.xAxisLineEnabled, s.xAxisLabelSize, s.xAxisRotation,
+      s.columnWidth, s.dataLabelsEnabled, s.dataLabelsColor],
   );
 
   return (
@@ -849,15 +977,15 @@ const RegionsTable: React.FC = () => {
         </div>
       }
     >
-      <div style={{ overflow: 'auto', height: '100%', padding: '0 4px 4px' }}>
+      <div style={{ overflow: 'auto', height: '100%', padding: '0 4px 4px', border: `1px solid ${s.dgOuterBorderColor}`, borderRadius: s.frameRadius }}>
         <table style={{ width: '100%', borderCollapse: 'collapse', fontFamily: s.dataFont }}>
           <thead>
             <tr>
-              <th style={{ ...thStyle, textAlign: 'left' }}>Регион</th>
-              <th style={thStyle}>Кол-во</th>
-              <th style={thStyle}>Продажи</th>
-              <th style={thStyle}>Прибыль</th>
-              <th style={thStyle}>Доходность</th>
+              <th style={{ ...thStyle, textAlign: 'left', borderRight: `1px solid ${s.dgVertBorderColor}` }}>Регион</th>
+              <th style={{ ...thStyle, borderRight: `1px solid ${s.dgVertBorderColor}` }}>Кол-во</th>
+              <th style={{ ...thStyle, borderRight: `1px solid ${s.dgVertBorderColor}` }}>Продажи</th>
+              <th style={{ ...thStyle, borderRight: `1px solid ${s.dgVertBorderColor}` }}>Прибыль</th>
+              <th style={{ ...thStyle, borderRight: `1px solid ${s.dgVertBorderColor}` }}>Доходность</th>
               <th style={{ ...thStyle, fontSize: 7, textAlign: 'center' }}>(график по месяцам)</th>
             </tr>
           </thead>
@@ -866,15 +994,15 @@ const RegionsTable: React.FC = () => {
               <tr
                 key={i}
                 style={{
-                  borderBottom: '1px solid rgba(0,0,0,0.06)',
+                  borderBottom: `1px solid ${s.dgHorizBorderColor}`,
                   background: s.dgRowAltEnabled && i % 2 === 1 ? s.dgRowAltColor : 'transparent',
                 }}
               >
-                <td style={{ ...tdStyle, textAlign: 'left' }}>{r.name}</td>
-                <td style={tdStyle}>{r.count}</td>
-                <td style={tdStyle}>{fmt(r.sales)} ₽</td>
-                <td style={tdStyle}>{fmt(r.profit)} ₽</td>
-                <td style={tdStyle}>{r.pct}%</td>
+                <td style={{ ...tdStyle, textAlign: 'left', borderRight: `1px solid ${s.dgVertBorderColor}` }}>{r.name}</td>
+                <td style={{ ...tdStyle, borderRight: `1px solid ${s.dgVertBorderColor}` }}>{r.count}</td>
+                <td style={{ ...tdStyle, borderRight: `1px solid ${s.dgVertBorderColor}` }}>{fmt(r.sales)} ₽</td>
+                <td style={{ ...tdStyle, borderRight: `1px solid ${s.dgVertBorderColor}` }}>{fmt(r.profit)} ₽</td>
+                <td style={{ ...tdStyle, borderRight: `1px solid ${s.dgVertBorderColor}` }}>{r.pct}%</td>
                 <td style={{ padding: '2px 4px' }}>
                   <SparklineSVG data={r.spark} color={s.paletteColors[0]} />
                 </td>
@@ -928,8 +1056,7 @@ const EChartsSheet: React.FC = () => {
 const VisApiSheet: React.FC = () => {
   const s = useWidgetStyles();
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
-  const { theme, palette, globalTokens, themeName, getExportTheme } = useThemeStore();
-  const visApiUrl = (import.meta.env.VITE_VISAPI_IFRAME_URL as string | undefined) ?? '';
+  const { theme, palette, globalTokens, themeName, getExportTheme, visApiUrl, visApiTargetOrigin } = useThemeStore();
 
   useEffect(() => {
     if (!iframeRef.current?.contentWindow || !visApiUrl) return;
@@ -940,9 +1067,9 @@ const VisApiSheet: React.FC = () => {
         themeName,
         payload: getExportTheme(),
       },
-      '*',
+      visApiTargetOrigin || '*',
     );
-  }, [theme, palette, globalTokens, themeName, getExportTheme, visApiUrl]);
+  }, [theme, palette, globalTokens, themeName, getExportTheme, visApiUrl, visApiTargetOrigin]);
 
   return (
     <div
@@ -966,11 +1093,29 @@ const VisApiSheet: React.FC = () => {
           padding: '10px 12px',
         }}
       >
-        <div style={{ color: s.titleColor, fontFamily: s.titleFont, fontWeight: 700, fontSize: Math.min(s.titleSize * 0.65, 16) }}>
-          Лист VisAPI
-        </div>
-        <div style={{ color: s.axisLabelColor, fontSize: 10, marginTop: 2 }}>
-          Реальный лист через iframe-интеграцию с VisAPI (live синхронизация темы).
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
+          <div>
+            <div style={{ color: s.titleColor, fontFamily: s.titleFont, fontWeight: 700, fontSize: Math.min(s.titleSize * 0.65, 16) }}>
+              Лист VisAPI — просмотр
+            </div>
+            <div style={{ color: s.axisLabelColor, fontSize: 10, marginTop: 2 }}>
+              {visApiUrl || 'URL не настроен'}
+            </div>
+          </div>
+          {visApiUrl && (
+            <div style={{
+              background: 'rgba(255,200,50,0.12)',
+              border: '1px solid rgba(255,200,50,0.3)',
+              borderRadius: 5,
+              padding: '4px 10px',
+              fontSize: 9,
+              color: '#ffc832',
+              whiteSpace: 'nowrap',
+              flexShrink: 0,
+            }}>
+              ⚠️ Тема не синхронизируется live — экспортируй JSON
+            </div>
+          )}
         </div>
       </div>
 
@@ -1000,7 +1145,7 @@ const VisApiSheet: React.FC = () => {
                   themeName,
                   payload: getExportTheme(),
                 },
-                '*',
+                visApiTargetOrigin || '*',
               );
             }}
             style={{
@@ -1012,15 +1157,48 @@ const VisApiSheet: React.FC = () => {
             }}
           />
         ) : (
-          <div style={{ textAlign: 'center', maxWidth: 660, padding: 20 }}>
-            <div style={{ fontSize: 44, marginBottom: 8, color: s.paletteColors[0] }}>◈</div>
-            <div style={{ color: s.titleColor, fontFamily: s.titleFont, fontSize: 20, fontWeight: 700, marginBottom: 8 }}>
-              VisAPI iframe not configured
+          <div style={{ textAlign: 'center', maxWidth: 700, padding: '20px 24px' }}>
+            <div style={{ fontSize: 44, marginBottom: 10, color: s.paletteColors[0] }}>◈</div>
+            <div style={{ color: s.titleColor, fontFamily: s.titleFont, fontSize: 18, fontWeight: 700, marginBottom: 6 }}>
+              VisAPI iframe не настроен
             </div>
-            <div style={{ color: s.axisLabelColor, fontSize: 12, lineHeight: 1.7 }}>
-              Задай URL в переменной окружения <b>VITE_VISAPI_IFRAME_URL</b>, чтобы подключить
-              live-рендер Visiology на этом листе. После этого тема будет отправляться в iframe
-              через <b>window.postMessage</b> с событием <b>VIS_THEME_UPDATE</b>.
+            <div style={{ color: s.axisLabelColor, fontSize: 11, lineHeight: 1.7, marginBottom: 16 }}>
+              Введи URL дашборда Visiology в блоке <b>Theme → VisAPI — просмотр дашборда</b>.
+            </div>
+            {/* Workflow cards */}
+            <div style={{ display: 'flex', gap: 10, textAlign: 'left' }}>
+              {[
+                {
+                  icon: '🎨',
+                  title: 'Режим дизайна',
+                  desc: 'Оставайся на листе ECharts, настраивай цвета, шрифты, виджеты — всё обновляется в реальном времени.',
+                },
+                {
+                  icon: '📤',
+                  title: 'Экспорт в Visiology',
+                  desc: 'Нажми Экспорт JSON → загрузи файл в Admin Panel Visiology (Appearance → Themes). Это единственный способ применить тему.',
+                },
+                {
+                  icon: '📥',
+                  title: 'Импорт из Visiology',
+                  desc: 'Используй кнопку «Получить тему из Visiology API» в Theme → Импорт или загрузи JSON файл вручную.',
+                },
+              ].map(({ icon, title, desc }) => (
+                <div
+                  key={title}
+                  style={{
+                    flex: 1,
+                    background: 'rgba(255,255,255,0.04)',
+                    border: '1px solid rgba(255,255,255,0.08)',
+                    borderRadius: 8,
+                    padding: '10px 12px',
+                  }}
+                >
+                  <div style={{ fontSize: 20, marginBottom: 5 }}>{icon}</div>
+                  <div style={{ color: s.titleColor, fontWeight: 600, fontSize: 11, marginBottom: 4 }}>{title}</div>
+                  <div style={{ color: s.axisLabelColor, fontSize: 10, lineHeight: 1.6 }}>{desc}</div>
+                </div>
+              ))}
             </div>
           </div>
         )}
