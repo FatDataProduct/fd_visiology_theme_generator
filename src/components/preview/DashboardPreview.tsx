@@ -1,18 +1,97 @@
-import React from 'react';
+import React, { useEffect, useRef, useMemo } from 'react';
+import * as echarts from 'echarts';
 import { useThemeStore } from '../../store/themeStore';
 
-const CELL_W = 280;
-const CELL_H = 200;
-const GAP = 12;
+/* ================================================================
+   MOCK DATA — stable module-level constants
+   ================================================================ */
 
-interface WidgetProps {
-  x: number;
-  y: number;
-  w: number;
-  h: number;
-  title: string;
-  type: string;
-}
+const TOP_SALES = [
+  { name: 'Copiers', value: 239090 },
+  { name: 'Bookcases', value: 216491 },
+  { name: 'Phones', value: 213216 },
+  { name: 'Storage', value: 209136 },
+  { name: 'Appliances', value: 172735 },
+  { name: 'Machines', value: 138944 },
+  { name: 'Chairs', value: 131641 },
+  { name: 'Accessories', value: 106273 },
+  { name: 'Art', value: 95794 },
+  { name: 'Tables', value: 67755 },
+];
+
+const MONTHS = [
+  '01 дек. 17', '01 нояб. 18', '01 дек. 18',
+  '01 янв. 18', '01 фев. 18', '01 мар. 18', '01 апр. 18', '01 май 18',
+  '01 июн. 18', '01 июл. 18', '01 авг. 18', '01 сен. 18', '01 окт. 18', '01 нояб. 18',
+  '01 дек. 18', '01 янв. 19', '01 фев. 19', '01 мар. 19', '01 апр. 19', '01 май 19',
+  '01 июн. 19', '01 июл. 19', '01 авг. 19', '01 сен. 19', '01 окт. 19', '01 нояб. 19',
+  '01 дек. 19',
+];
+
+const SALES_MONTHLY = [
+  820, 880, 750, 900, 1100, 980, 850, 920, 1050, 1200, 1350, 1150, 1400,
+  980, 1100, 1250, 1380, 1150, 1050, 1200, 1350, 1500, 1650, 1580, 1758, 1700, 1758,
+];
+
+const PROFIT_PCT = [
+  5, 8, -3, 8, 12, -5, 2, 15, -8, 10, 7, -12, 18,
+  3, -7, 11, 9, -2, 6, 14, -10, 8, 5, -15, 12, 7, 10,
+];
+
+const HEATMAP_CATS = [
+  'Accessories', 'Appliances', 'Art', 'Binders', 'Bookcases', 'Chairs', 'Copiers',
+  'Envelopes', 'Fasteners', 'Furnishings', 'Labels', 'Machines', 'Paper', 'Phones',
+  'Storage', 'Supplies', 'Tables',
+];
+
+const HEATMAP_DATA: [number, number, number][] = (() => {
+  const d: [number, number, number][] = [];
+  for (let cat = 0; cat < HEATMAP_CATS.length; cat++) {
+    for (let m = 0; m < MONTHS.length; m++) {
+      const val = Math.round(
+        Math.sin(cat * 3.7 + m * 1.3) * 40 + Math.cos(cat * 2.1 - m * 0.8) * 15,
+      );
+      d.push([m, cat, Math.max(-50, Math.min(50, val))]);
+    }
+  }
+  return d;
+})();
+
+const REGIONS = [
+  { name: 'Abruzzi', count: 56, sales: 4740, profit: 469, pct: 10, spark: [3, 5, 4, 6, 3, 5, 7, 4, 6, 5, 8, 6] },
+  { name: 'Alsace-Champ..', count: 413, sales: 32464, profit: 2615, pct: 8, spark: [10, 12, 8, 15, 10, 14, 12, 16, 11, 14, 13, 15] },
+  { name: 'Andalusia', count: 214, sales: 23897, profit: 5200, pct: 22, spark: [8, 10, 12, 9, 14, 12, 15, 13, 16, 15, 18, 17] },
+  { name: 'Antwerp', count: 105, sales: 10121, profit: 1931, pct: 19, spark: [4, 6, 5, 7, 8, 6, 9, 7, 10, 8, 11, 9] },
+  { name: 'Apulia', count: 160, sales: 13337, profit: 1170, pct: 9, spark: [6, 5, 7, 4, 8, 6, 5, 7, 6, 8, 7, 9] },
+  { name: 'Aquitaine-Lim..', count: 495, sales: 40689, profit: 6092, pct: 15, spark: [15, 18, 16, 20, 17, 22, 19, 24, 21, 23, 25, 22] },
+  { name: 'Asturias', count: 42, sales: 4625, profit: 1446, pct: 31, spark: [2, 3, 4, 3, 5, 4, 6, 5, 7, 6, 5, 8] },
+  { name: 'Auvergne-Rhô..', count: 584, sales: 50920, profit: 8676, pct: 17, spark: [20, 22, 18, 25, 21, 28, 24, 30, 26, 28, 32, 29] },
+  { name: 'Baden-Württe..', count: 344, sales: 30413, profit: 6125, pct: 20, spark: [12, 14, 11, 16, 13, 18, 15, 20, 17, 19, 22, 18] },
+  { name: 'Balearic Islands', count: 51, sales: 6062, profit: 1310, pct: 22, spark: [2, 3, 2, 4, 3, 5, 4, 6, 5, 4, 7, 5] },
+  { name: 'Basel-Stadt', count: 24, sales: 2434, profit: 994, pct: 41, spark: [1, 2, 1, 3, 2, 4, 3, 2, 4, 3, 5, 3] },
+];
+
+const BOXPLOT_ITEMS = [
+  { name: 'Furniture', median: 511, stats: [50, 200, 511, 800, 1800] as [number, number, number, number, number] },
+  { name: 'Office Supplies', median: 161, stats: [10, 60, 161, 300, 800] as [number, number, number, number, number] },
+  { name: 'Technology', median: 585, stats: [30, 250, 585, 900, 2100] as [number, number, number, number, number] },
+];
+
+const SCATTER_PTS: [number, number][] = [
+  [120, 0], [250, 0], [350, 0], [420, 0], [550, 0], [620, 0], [700, 0], [900, 0],
+  [1050, 0], [1200, 0], [1400, 0], [1600, 0], [1800, 0],
+  [25, 1], [50, 1], [80, 1], [130, 1], [200, 1], [300, 1], [400, 1], [600, 1], [700, 1],
+  [80, 2], [150, 2], [350, 2], [550, 2], [700, 2], [850, 2], [1200, 2], [1500, 2], [2000, 2],
+];
+
+const KPI_SPARK = [
+  56000, 52000, 48000, 55000, 61000, 58000, 63000, 72000, 68000, 65000, 74000, 80000,
+  85000, 78000, 82000, 90000, 95000, 88000, 92000, 100000, 105000, 110000, 115000, 123990,
+];
+
+/* ================================================================
+   HELPERS
+   ================================================================ */
 
 function getVal(obj: unknown, path: string, def: unknown = ''): unknown {
   if (obj == null || typeof obj !== 'object') return def;
@@ -25,383 +104,1114 @@ function getVal(obj: unknown, path: string, def: unknown = ''): unknown {
   return cur ?? def;
 }
 
-const WidgetStub: React.FC<WidgetProps> = ({ x, y, w, h, title, type }) => {
-  const { theme, palette, showGrid, mode, globalTokens } = useThemeStore();
-  const base = theme.WidgetStyles.$values[0];
-  if (!base) return null;
+function fmt(n: number): string {
+  return n.toLocaleString('ru-RU');
+}
 
+function withAlpha(color: string, alpha: number): string {
+  const m = color.match(/rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)/);
+  if (m) return `rgba(${m[1]},${m[2]},${m[3]},${alpha})`;
+  if (color.startsWith('#') && color.length >= 7) {
+    const r = parseInt(color.slice(1, 3), 16);
+    const g = parseInt(color.slice(3, 5), 16);
+    const b = parseInt(color.slice(5, 7), 16);
+    return `rgba(${r},${g},${b},${alpha})`;
+  }
+  return color;
+}
+
+/* ================================================================
+   ECHART WRAPPER — lightweight React wrapper around ECharts
+   ================================================================ */
+
+interface EChartProps {
+  option: Record<string, unknown>;
+  style?: React.CSSProperties;
+}
+
+const EChart: React.FC<EChartProps> = ({ option, style }) => {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const chartRef = useRef<echarts.ECharts | null>(null);
+
+  useEffect(() => {
+    if (!containerRef.current) return;
+    chartRef.current = echarts.init(containerRef.current, undefined, { renderer: 'svg' });
+
+    const ro = new ResizeObserver(() => chartRef.current?.resize());
+    ro.observe(containerRef.current);
+
+    return () => {
+      ro.disconnect();
+      chartRef.current?.dispose();
+      chartRef.current = null;
+    };
+  }, []);
+
+  // Run on every render — guarantees ECharts always reflects latest state
+  useEffect(() => {
+    chartRef.current?.setOption(option, { notMerge: true });
+  });
+
+  return <div ref={containerRef} style={style} />;
+};
+
+/* ================================================================
+   THEME HOOK — extracts all display properties from Zustand store
+   ================================================================ */
+
+function useWidgetStyles() {
+  const { theme, palette, mode, globalTokens, showGrid } = useThemeStore();
+  const base = theme.WidgetStyles.$values[0];
   const paletteColors = palette.map((c) => c.value);
 
-  const titleEnabled = base.Title?.Enabled ?? true;
-  const titleColor = base.Title?.TextStyle?.Color ?? (mode === 'dark' ? 'rgba(255,255,255,1)' : 'rgba(0,0,0,1)');
-  const titleFont = base.Title?.TextStyle?.FontFamily ?? globalTokens.titleFontFamily;
-  const titleSize = base.Title?.TextStyle?.FontSize ?? globalTokens.titleFontSize;
-  const titleBold = base.Title?.TextStyle?.IsBold ?? true;
-  const titleBgEnabled = base.Title?.Background?.Enabled ?? false;
-  const titleBgColor = base.Title?.Background?.Color?.Color ?? 'rgba(255,255,255,0)';
-
-  const bgEnabled = base.Background?.Enabled ?? false;
-  const bgColor = base.Background?.Color?.Color ?? (mode === 'dark' ? 'rgba(30,30,46,0.95)' : 'rgba(255,255,255,0.95)');
-  const frameEnabled = base.Frame?.Enabled ?? false;
-  const frameColor = base.Frame?.Style?.Color ?? 'rgba(128,128,128,0.5)';
-  const frameRadius = base.Frame?.Style?.Radius ?? globalTokens.borderRadius;
-  const shadowX = base.BoxShadow?.X ?? 0;
-  const shadowY = base.BoxShadow?.Y ?? 0;
-  const shadowBlur = base.BoxShadow?.Blur ?? 0;
-  const shadowColor = base.BoxShadow?.Color ?? 'rgba(0,0,0,0)';
-
-  const titleH = titleEnabled ? 28 : 4;
-  const chartArea = { x: 8, y: titleH + 4, w: w - 16, h: h - titleH - 12 };
-  const filterId = `sh-${x}-${y}`;
-
-  const chartWidget = theme.WidgetStyles.$values.find((ww) =>
-    ww.Type === 'BarChart' || ww.Type === 'ColumnChart' || ww.Type === 'Chart'
+  const chartWidget = theme.WidgetStyles.$values.find(
+    (w) => w.Type === 'BarChart' || w.Type === 'ColumnChart' || w.Type === 'Chart',
   );
-  const legendEnabled = chartWidget ? (getVal(chartWidget, 'Legend.Enabled', true) as boolean) : true;
-  const legendColor = chartWidget ? (getVal(chartWidget, 'Legend.TextStyle.Color', 'rgb(108,117,125)') as string) : 'rgb(108,117,125)';
-  const legendSize = chartWidget ? (getVal(chartWidget, 'Legend.TextStyle.FontSize', 10) as number) : 10;
-  const axisLabelColor = chartWidget ? (getVal(chartWidget, 'YAxis.Labels.TextStyle.Color', 'rgb(108,117,125)') as string) : 'rgb(108,117,125)';
-  const gridEnabled = chartWidget ? (getVal(chartWidget, 'YAxis.Grid.Enabled', true) as boolean) : true;
+  const dgWidget = theme.WidgetStyles.$values.find((w) => w.Type === 'DataGrid');
+  const indicatorWidget = theme.WidgetStyles.$values.find((w) => w.Type === 'Indicator');
 
-  const indicatorWidget = theme.WidgetStyles.$values.find((ww) => ww.Type === 'Indicator');
-  const indValueColor = indicatorWidget ? (getVal(indicatorWidget, 'ValueSettings.TextStyle.Color', 'rgb(73,80,87)') as string) : 'rgb(73,80,87)';
-  const indValueSize = indicatorWidget ? (getVal(indicatorWidget, 'ValueSettings.TextStyle.FontSize', 52) as number) : 52;
-  const indPositiveColor = indicatorWidget ? (getVal(indicatorWidget, 'TrendSettings.PositiveTrendDetails.Color', 'rgb(29,167,80)') as string) : 'rgb(29,167,80)';
+  return {
+    paletteColors,
+    bgColor: (() => {
+      const c = base?.Background?.Color?.Color;
+      const fallback = mode === 'dark' ? 'rgba(30,30,46,0.95)' : 'rgba(255,255,255,0.95)';
+      if (!c) return fallback;
+      // Treat fully transparent as "no color set"
+      if (/rgba\([^)]*,\s*0(\.0+)?\s*\)$/i.test(c)) return fallback;
+      return c;
+    })(),
+    frameEnabled: base?.Frame?.Enabled ?? false,
+    frameColor: base?.Frame?.Style?.Color ?? 'rgba(128,128,128,0.5)',
+    frameRadius: base?.Frame?.Style?.Radius ?? globalTokens.borderRadius,
+    shadowX: base?.BoxShadow?.X ?? 0,
+    shadowY: base?.BoxShadow?.Y ?? 0,
+    shadowBlur: base?.BoxShadow?.Blur ?? 0,
+    shadowColor: base?.BoxShadow?.Color ?? 'rgba(0,0,0,0)',
+    titleColor: base?.Title?.TextStyle?.Color ?? (mode === 'dark' ? 'rgba(255,255,255,1)' : 'rgba(0,0,0,1)'),
+    titleFont: base?.Title?.TextStyle?.FontFamily ?? globalTokens.titleFontFamily,
+    titleSize: base?.Title?.TextStyle?.FontSize ?? globalTokens.titleFontSize,
+    titleBold: base?.Title?.TextStyle?.IsBold ?? true,
+    axisLabelColor: chartWidget
+      ? (getVal(chartWidget, 'YAxis.Labels.TextStyle.Color', 'rgb(108,117,125)') as string)
+      : 'rgb(108,117,125)',
+    gridEnabled: chartWidget
+      ? (getVal(chartWidget, 'YAxis.Grid.Enabled', true) as boolean)
+      : true,
+    legendEnabled: chartWidget
+      ? (getVal(chartWidget, 'Legend.Enabled', true) as boolean)
+      : true,
+    legendColor: chartWidget
+      ? (getVal(chartWidget, 'Legend.TextStyle.Color', 'rgb(108,117,125)') as string)
+      : 'rgb(108,117,125)',
+    dgHeaderBg: dgWidget
+      ? (getVal(dgWidget, 'DataGridStyle.Header.Background', 'rgb(234,246,249)') as string)
+      : 'rgb(234,246,249)',
+    dgHeaderColor: dgWidget
+      ? (getVal(dgWidget, 'DataGridStyle.Header.TextStyle.Color', 'rgb(73,80,87)') as string)
+      : 'rgb(73,80,87)',
+    dgHeaderFontSize: dgWidget
+      ? (getVal(dgWidget, 'DataGridStyle.Header.TextStyle.FontSize', 15) as number)
+      : 15,
+    dgBodyColor: dgWidget
+      ? (getVal(dgWidget, 'DataGridStyle.Body.TextStyle.Color', 'rgb(73,80,87)') as string)
+      : 'rgb(73,80,87)',
+    dgBodyFontSize: dgWidget
+      ? (getVal(dgWidget, 'DataGridStyle.Body.TextStyle.FontSize', 15) as number)
+      : 15,
+    dgRowAltEnabled: dgWidget
+      ? (getVal(dgWidget, 'DataGridStyle.Body.RowAlternationEnabled', false) as boolean)
+      : false,
+    dgRowAltColor: dgWidget
+      ? (getVal(dgWidget, 'DataGridStyle.Body.RowAlternationColor', 'rgb(234,246,249)') as string)
+      : 'rgb(234,246,249)',
+    xAxisLabelColor: chartWidget
+      ? (getVal(chartWidget, 'XAxis.Labels.TextStyle.Color', 'rgb(108,117,125)') as string)
+      : 'rgb(108,117,125)',
+    indValueColor: indicatorWidget
+      ? (getVal(indicatorWidget, 'ValueSettings.TextStyle.Color', 'rgb(73,80,87)') as string)
+      : 'rgb(73,80,87)',
+    indPositiveColor: indicatorWidget
+      ? (getVal(indicatorWidget, 'TrendSettings.PositiveTrendDetails.Color', 'rgb(29,167,80)') as string)
+      : 'rgb(29,167,80)',
+    indNegativeColor: indicatorWidget
+      ? (getVal(indicatorWidget, 'TrendSettings.NegativeTrendDetails.Color', 'rgb(255,65,54)') as string)
+      : 'rgb(255,65,54)',
+    dataFont: globalTokens.dataFontFamily,
+    showGrid,
+    mode,
 
-  const dgWidget = theme.WidgetStyles.$values.find((ww) => ww.Type === 'DataGrid');
-  const dgHeaderBg = dgWidget ? (getVal(dgWidget, 'DataGridStyle.Header.Background', 'rgb(234,246,249)') as string) : 'rgb(234,246,249)';
-  const dgHeaderColor = dgWidget ? (getVal(dgWidget, 'DataGridStyle.Header.TextStyle.Color', 'rgb(73,80,87)') as string) : 'rgb(73,80,87)';
-  const dgBodyColor = dgWidget ? (getVal(dgWidget, 'DataGridStyle.Body.TextStyle.Color', 'rgb(73,80,87)') as string) : 'rgb(73,80,87)';
+    // ── Widget title extras ──────────────────────────────────────────
+    titleEnabled: base?.Title?.Enabled ?? true,
+    titleItalic: base?.Title?.TextStyle?.IsItalic ?? false,
+    titleAlign: (base?.Title?.TextStyle?.Align ?? 1) as number,   // 0=left 1=center 2=right
+    titleBgEnabled: base?.Title?.Background?.Enabled ?? false,
+    titleBgColor: base?.Title?.Background?.Color?.Color ?? 'transparent',
 
-  const renderContent = () => {
-    switch (type) {
-      case 'bar': return renderBarChart(chartArea, paletteColors, axisLabelColor, gridEnabled, legendEnabled, legendColor, legendSize);
-      case 'column': return renderColumnChart(chartArea, paletteColors, axisLabelColor, gridEnabled, legendEnabled, legendColor, legendSize);
-      case 'line': return renderLineChart(chartArea, paletteColors, axisLabelColor, gridEnabled, legendEnabled, legendColor, legendSize);
-      case 'pie': return renderPieChart(chartArea, paletteColors, legendEnabled, legendColor, legendSize);
-      case 'gauge': return renderGauge(chartArea, paletteColors);
-      case 'indicator': return renderIndicator(chartArea, indValueColor, indValueSize, indPositiveColor, titleFont);
-      case 'table': return renderTable(chartArea, paletteColors, dgHeaderBg, dgHeaderColor, dgBodyColor);
-      case 'filter': return renderFilter(chartArea, paletteColors);
-      case 'text': return renderText(chartArea, titleColor);
-      case 'olap': return renderOlapTable(chartArea, paletteColors);
-      case 'dateFilter': return renderDateFilter(chartArea, paletteColors);
-      case 'kpi': return renderKPI(chartArea, paletteColors, indValueColor, indPositiveColor, titleFont);
-      default: return null;
-    }
+    // ── Chart axis extras ────────────────────────────────────────────
+    yAxisEnabled: chartWidget
+      ? (getVal(chartWidget, 'YAxis.Enabled', true) as boolean)
+      : true,
+    yAxisLineEnabled: chartWidget
+      ? (getVal(chartWidget, 'YAxis.LineEnabled', false) as boolean)
+      : false,
+    yAxisLabelSize: chartWidget
+      ? (getVal(chartWidget, 'YAxis.Labels.TextStyle.FontSize', 12) as number)
+      : 12,
+    xAxisLineEnabled: chartWidget
+      ? (getVal(chartWidget, 'XAxis.LineEnabled', false) as boolean)
+      : false,
+    xAxisLabelSize: chartWidget
+      ? (getVal(chartWidget, 'XAxis.Labels.TextStyle.FontSize', 12) as number)
+      : 12,
+    xAxisRotation: chartWidget
+      ? (getVal(chartWidget, 'XAxis.Labels.RotationAngle', 0) as number)
+      : 0,
+    legendFontSize: chartWidget
+      ? (getVal(chartWidget, 'Legend.TextStyle.FontSize', 12) as number)
+      : 12,
+    legendPosition: chartWidget
+      ? (getVal(chartWidget, 'Legend.VerticalAlign', 0) as number)
+      : 0,   // 0=Top 2=Bottom 1=Left 3=Right (Visiology enum)
+    dataLabelsEnabled: chartWidget
+      ? (getVal(chartWidget, 'DataLabels.Enabled', false) as boolean)
+      : false,
+    dataLabelsColor: chartWidget
+      ? (getVal(chartWidget, 'DataLabels.TextStyle.Color', 'rgb(73,80,87)') as string)
+      : 'rgb(73,80,87)',
+    columnWidth: chartWidget
+      ? (getVal(chartWidget, 'Column.Width', 20) as number)
+      : 20,
+
+    // ── Table border extras ──────────────────────────────────────────
+    dgOuterBorderColor: dgWidget
+      ? (getVal(dgWidget, 'DataGridStyle.OuterBorder.Color.Color', 'rgba(101,210,228,0.5)') as string)
+      : 'rgba(101,210,228,0.5)',
+    dgHorizBorderColor: dgWidget
+      ? (getVal(dgWidget, 'DataGridStyle.InnerHorizontalBorder.Color.Color', 'rgba(0,0,0,0.06)') as string)
+      : 'rgba(0,0,0,0.06)',
+    dgVertBorderColor: dgWidget
+      ? (getVal(dgWidget, 'DataGridStyle.InnerVerticalBorder.Color.Color', 'rgba(0,0,0,0.04)') as string)
+      : 'rgba(0,0,0,0.04)',
+
+    // ── KPI / Indicator extras ───────────────────────────────────────
+    indValueFontSize: indicatorWidget
+      ? (getVal(indicatorWidget, 'ValueSettings.TextStyle.FontSize', 52) as number)
+      : 52,
+    indValueBold: indicatorWidget
+      ? (getVal(indicatorWidget, 'ValueSettings.TextStyle.IsBold', false) as boolean)
+      : false,
+    indNeutralColor: indicatorWidget
+      ? (getVal(indicatorWidget, 'TrendSettings.NeutralTrendDetails.Color', 'rgb(199,152,7)') as string)
+      : 'rgb(199,152,7)',
   };
+}
+
+/* ================================================================
+   WIDGET CARD — shared shell wrapper
+   ================================================================ */
+
+const WidgetCard: React.FC<{
+  title: string;
+  subtitle?: string;
+  children: React.ReactNode;
+  style?: React.CSSProperties;
+  headerRight?: React.ReactNode;
+}> = ({ title, subtitle, children, style, headerRight }) => {
+  const s = useWidgetStyles();
 
   return (
-    <g transform={`translate(${x}, ${y})`}>
-      {shadowBlur > 0 && (
-        <defs>
-          <filter id={filterId}>
-            <feDropShadow dx={shadowX} dy={shadowY} stdDeviation={shadowBlur / 2} floodColor={shadowColor} floodOpacity={0.3} />
-          </filter>
-        </defs>
+    <div
+      className="dash-widget"
+      style={{
+        background: s.bgColor,
+        border: s.frameEnabled ? `1px solid ${s.frameColor}` : '1px solid rgba(0,0,0,0.08)',
+        borderRadius: s.frameRadius,
+        boxShadow:
+          s.shadowBlur > 0
+            ? `${s.shadowX}px ${s.shadowY}px ${s.shadowBlur}px ${s.shadowColor}`
+            : 'none',
+        display: 'flex',
+        flexDirection: 'column',
+        overflow: 'hidden',
+        outline: s.showGrid ? '1px dashed rgba(40,238,150,0.3)' : 'none',
+        ...style,
+      }}
+    >
+      {s.titleEnabled !== false && (
+        <div
+          style={{
+            padding: '6px 10px 2px',
+            background: s.titleBgEnabled ? s.titleBgColor : 'transparent',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'flex-start',
+            flexShrink: 0,
+          }}
+        >
+          <div style={{ flex: 1 }}>
+            <div
+              style={{
+                color: s.titleColor,
+                fontFamily: s.titleFont,
+                fontSize: Math.min(s.titleSize * 0.55, 13),
+                fontWeight: s.titleBold ? 700 : 400,
+                fontStyle: s.titleItalic ? 'italic' : 'normal',
+                textAlign: s.titleAlign === 0 ? 'left' : s.titleAlign === 2 ? 'right' : 'center',
+                lineHeight: 1.3,
+              }}
+            >
+              {title}
+            </div>
+            {subtitle && <div style={{ color: s.axisLabelColor, fontSize: 9, marginTop: 1 }}>{subtitle}</div>}
+          </div>
+          {headerRight}
+        </div>
       )}
-      <rect
-        width={w} height={h} rx={frameRadius} ry={frameRadius}
-        fill={bgEnabled ? bgColor : (mode === 'dark' ? 'rgba(30,30,46,0.95)' : 'rgba(255,255,255,0.95)')}
-        stroke={frameEnabled ? frameColor : 'rgba(0,0,0,0.06)'}
-        strokeWidth={frameEnabled ? 1 : 0.5}
-        filter={shadowBlur > 0 ? `url(#${filterId})` : undefined}
-      />
-      {showGrid && (
-        <rect width={w} height={h} rx={frameRadius} fill="none" stroke="rgba(40,238,150,0.3)" strokeWidth={1} strokeDasharray="4 2" />
-      )}
-      {titleEnabled && (
-        <>
-          {titleBgEnabled && (
-            <rect x={0} y={0} width={w} height={titleH} rx={frameRadius} fill={titleBgColor} />
-          )}
-          <text x={10} y={titleH - 8} fill={titleColor} fontSize={Math.min(titleSize * 0.6, 13)} fontFamily={titleFont} fontWeight={titleBold ? 700 : 400}>
-            {title}
-          </text>
-        </>
-      )}
-      {renderContent()}
-    </g>
+      <div style={{ flex: 1, minHeight: 0, position: 'relative' }}>{children}</div>
+    </div>
   );
 };
 
-// ============ CHART RENDERERS ============
+/* ================================================================
+   DASHBOARD HEADER
+   ================================================================ */
 
-interface Area { x: number; y: number; w: number; h: number }
-
-function renderBarChart(area: Area, palette: string[], axisColor: string, grid: boolean, legend: boolean, legendColor: string, legendSize: number) {
-  const bars = [0.7, 0.9, 0.5, 0.8, 0.6];
-  const barH = (area.h - (bars.length - 1) * 4 - (legend ? 16 : 0)) / bars.length;
+const DashHeader: React.FC = () => {
+  const s = useWidgetStyles();
   return (
-    <g transform={`translate(${area.x}, ${area.y})`}>
-      {grid && Array.from({ length: 5 }).map((_, i) => (
-        <line key={i} x1={area.w * (i / 4)} y1={0} x2={area.w * (i / 4)} y2={area.h - (legend ? 16 : 0)} stroke="rgba(0,0,0,0.05)" />
-      ))}
-      {bars.map((val, i) => (
-        <rect key={i} x={0} y={i * (barH + 4)} width={area.w * val} height={barH} rx={2} fill={palette[i % palette.length]} opacity={0.85} />
-      ))}
-      {Array.from({ length: 5 }).map((_, i) => (
-        <text key={`l${i}`} x={area.w * (i / 4)} y={area.h - (legend ? 20 : 4)} fontSize={8} fill={axisColor} textAnchor="middle">{i * 25}%</text>
-      ))}
-      {legend && (
-        <text x={area.w / 2} y={area.h - 2} fontSize={Math.min(legendSize, 9)} fill={legendColor} textAnchor="middle">● Series A  ● Series B</text>
-      )}
-    </g>
+    <div
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        padding: '6px 12px',
+        background: s.bgColor,
+        border: s.frameEnabled ? `1px solid ${s.frameColor}` : '1px solid rgba(0,0,0,0.08)',
+        borderRadius: s.frameRadius,
+        flexShrink: 0,
+        outline: s.showGrid ? '1px dashed rgba(40,238,150,0.3)' : 'none',
+      }}
+    >
+      <div style={{ flex: 1 }}>
+        <div style={{ fontSize: 16, fontWeight: 700, color: s.titleColor, fontFamily: s.titleFont }}>
+          Продажи отдела
+        </div>
+        <div style={{ fontSize: 9, color: s.axisLabelColor }}>
+          Дашборд для отслеживания продаж офисной мебели
+        </div>
+      </div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginRight: 16 }}>
+        <span style={{ fontSize: 10, color: s.axisLabelColor, fontWeight: 600 }}>Год</span>
+        <select
+          style={{
+            fontSize: 10,
+            padding: '2px 8px',
+            borderRadius: 3,
+            border: '1px solid rgba(0,0,0,0.15)',
+            background: 'transparent',
+            color: s.axisLabelColor,
+          }}
+        >
+          <option>(Multiple values)</option>
+        </select>
+      </div>
+      <div
+        style={{
+          fontSize: 9,
+          fontWeight: 700,
+          color: s.paletteColors[0],
+          border: `2px solid ${s.paletteColors[0]}`,
+          borderRadius: 3,
+          padding: '3px 6px',
+          lineHeight: 1.2,
+          textAlign: 'center',
+        }}
+      >
+        <div style={{ fontSize: 10 }}>ВС·13</div>
+        <div style={{ fontSize: 7, letterSpacing: 1 }}>СТАНД</div>
+        <div style={{ fontSize: 7, letterSpacing: 1 }}>АРТ</div>
+      </div>
+    </div>
   );
+};
+
+/* ================================================================
+   KPI ROW
+   ================================================================ */
+
+const KPIRow: React.FC = () => {
+  const s = useWidgetStyles();
+  const pc = s.paletteColors;
+
+  const sparkOption = useMemo(
+    () => ({
+      grid: { top: 5, bottom: 18, left: 5, right: 5 },
+      xAxis: {
+        type: 'category',
+        data: KPI_SPARK.map((_, i) => i),
+        show: false,
+        boundaryGap: false,
+      },
+      yAxis: { type: 'value', show: false },
+      series: [
+        {
+          type: 'line',
+          data: KPI_SPARK,
+          smooth: true,
+          symbol: 'none',
+          lineStyle: { color: pc[1] || pc[0], width: 1.5 },
+          areaStyle: {
+            color: {
+              type: 'linear',
+              x: 0, y: 0, x2: 0, y2: 1,
+              colorStops: [
+                { offset: 0, color: withAlpha(pc[1] || pc[0], 0.25) },
+                { offset: 1, color: withAlpha(pc[1] || pc[0], 0.02) },
+              ],
+            },
+          },
+        },
+      ],
+      tooltip: { show: false },
+    }),
+    [pc],
+  );
+
+  const progressOption = useMemo(
+    () => ({
+      grid: { top: 0, bottom: 0, left: 0, right: 0 },
+      xAxis: { type: 'value', max: 100, show: false },
+      yAxis: { type: 'category', data: [''], show: false },
+      series: [
+        {
+          type: 'bar',
+          data: [78],
+          barWidth: 22,
+          itemStyle: { color: pc[0], borderRadius: [0, 4, 4, 0] },
+          z: 2,
+        },
+        {
+          type: 'bar',
+          data: [100],
+          barWidth: 22,
+          barGap: '-100%',
+          itemStyle: { color: 'rgba(0,0,0,0.06)', borderRadius: 4 },
+          z: 1,
+        },
+      ],
+      tooltip: { show: false },
+    }),
+    [pc],
+  );
+
+  const cardBorder = s.frameEnabled ? `1px solid ${s.frameColor}` : '1px solid rgba(0,0,0,0.08)';
+
+  return (
+    <div
+      style={{
+        display: 'flex',
+        background: s.bgColor,
+        border: cardBorder,
+        borderRadius: s.frameRadius,
+        overflow: 'hidden',
+        flexShrink: 0,
+        outline: s.showGrid ? '1px dashed rgba(40,238,150,0.3)' : 'none',
+      }}
+    >
+      {/* Sales */}
+      <div style={{ flex: 5, padding: '8px 12px', display: 'flex', gap: 10, alignItems: 'center' }}>
+        <div style={{ flexShrink: 0 }}>
+          <div style={{ fontSize: 9, color: s.axisLabelColor }}>Продажи</div>
+          <div style={{ fontSize: Math.min(s.indValueFontSize * 0.42, 22), fontWeight: s.indValueBold ? 700 : 400, color: pc[0], fontFamily: s.titleFont, whiteSpace: 'nowrap' }}>
+            1 807 645 ₽
+          </div>
+          <div style={{ fontSize: 8, color: s.axisLabelColor, lineHeight: 1.4 }}>
+            всего за период
+            <br />
+            <span style={{ color: pc[0], fontWeight: 600 }}>56 851 ₽</span>
+          </div>
+        </div>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 7, color: s.axisLabelColor, marginBottom: 1 }}>
+            <span>01 янв. 18</span>
+            <span>
+              <span style={{ fontWeight: 600, color: s.indValueColor, marginRight: 12 }}>01 дек. 19</span>
+              <span style={{ fontWeight: 600, color: s.indValueColor }}>123 990 ₽</span>
+            </span>
+          </div>
+          <EChart option={sparkOption} style={{ width: '100%', height: 48 }} />
+        </div>
+      </div>
+
+      <div style={{ width: 1, background: 'rgba(0,0,0,0.06)', flexShrink: 0 }} />
+
+      {/* Plan completion */}
+      <div style={{ flex: 3, padding: '8px 16px', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+        <div style={{ fontSize: 9, color: s.axisLabelColor }}>Выполнение плана</div>
+        <div style={{ fontSize: Math.min(s.indValueFontSize * 0.5, 26), fontWeight: s.indValueBold ? 700 : 400, color: s.indValueColor, fontFamily: s.titleFont }}>78%</div>
+        <EChart option={progressOption} style={{ width: '100%', height: 24 }} />
+      </div>
+
+      <div style={{ width: 1, background: 'rgba(0,0,0,0.06)', flexShrink: 0 }} />
+
+      {/* Profitability */}
+      <div style={{ flex: 2, padding: '8px 16px', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'flex-end' }}>
+        <div style={{ fontSize: 9, color: s.axisLabelColor }}>Доходность</div>
+        <div style={{ fontSize: Math.min(s.indValueFontSize * 0.54, 28), fontWeight: s.indValueBold ? 700 : 400, color: s.titleColor, fontFamily: s.titleFont }}>12%</div>
+        <div style={{ fontSize: 9, color: s.indNeutralColor }}>▼ .7% YoY</div>
+      </div>
+    </div>
+  );
+};
+
+/* ================================================================
+   TOP SALES — horizontal bar chart
+   ================================================================ */
+
+const TopSalesChart: React.FC = () => {
+  const s = useWidgetStyles();
+
+  const option = useMemo(
+    () => ({
+      grid: { top: 2, bottom: 2, left: 80, right: 70 },
+      xAxis: { type: 'value', show: false },
+      yAxis: {
+        type: 'category',
+        data: [...TOP_SALES].reverse().map((d) => d.name),
+        axisLabel: { color: s.axisLabelColor, fontSize: 9, fontFamily: s.dataFont },
+        axisLine: { show: false },
+        axisTick: { show: false },
+      },
+      series: [
+        {
+          type: 'bar',
+          data: [...TOP_SALES].reverse().map((d) => d.value),
+          itemStyle: { color: s.paletteColors[0] },
+          barWidth: Math.max(8, Math.min(s.columnWidth * 0.3, 20)),
+          label: {
+            show: s.dataLabelsEnabled !== false,
+            position: 'right',
+            formatter: (p: { value: number }) => fmt(p.value) + ' ₽',
+            fontSize: Math.min(s.xAxisLabelSize * 0.55, 9),
+            color: s.dataLabelsEnabled ? s.dataLabelsColor : s.paletteColors[0],
+            fontFamily: s.dataFont,
+          },
+        },
+      ],
+      tooltip: { show: false },
+    }),
+    [s.paletteColors, s.axisLabelColor, s.dataFont, s.dataLabelsEnabled, s.dataLabelsColor, s.columnWidth, s.xAxisLabelSize],
+  );
+
+  return (
+    <WidgetCard title="Топ продаж, ₽" subtitle="По категориям" style={{ flex: 1 }}>
+      <EChart option={option} style={{ position: 'absolute', inset: 0 }} />
+    </WidgetCard>
+  );
+};
+
+/* ================================================================
+   LEGEND PLACEMENT HELPER
+   Maps Visiology enum (0=Top, 1=Left, 2=Bottom, 3=Right) → ECharts position
+   ================================================================ */
+
+function legendPlacement(pos: number): Record<string, unknown> {
+  switch (pos) {
+    case 2: return { bottom: 0, left: 'center', orient: 'horizontal' };
+    case 1: return { left: 0, top: 'middle', orient: 'vertical' };
+    case 3: return { right: 0, top: 'middle', orient: 'vertical' };
+    default: return { top: 0, right: 0, orient: 'horizontal' }; // 0 = Top
+  }
 }
 
-function renderColumnChart(area: Area, palette: string[], axisColor: string, grid: boolean, legend: boolean, legendColor: string, legendSize: number) {
-  const cols = [0.6, 0.85, 0.4, 0.7, 0.55, 0.9];
-  const colW = (area.w - (cols.length - 1) * 6) / cols.length;
-  const chartH = area.h - (legend ? 16 : 0);
-  return (
-    <g transform={`translate(${area.x}, ${area.y})`}>
-      {grid && Array.from({ length: 5 }).map((_, i) => (
-        <line key={i} x1={0} y1={chartH * (i / 4)} x2={area.w} y2={chartH * (i / 4)} stroke="rgba(0,0,0,0.05)" />
-      ))}
-      {cols.map((val, i) => {
-        const h = chartH * val;
-        return <rect key={i} x={i * (colW + 6)} y={chartH - h} width={colW} height={h} rx={2} fill={palette[i % palette.length]} opacity={0.85} />;
-      })}
-      {cols.map((_, i) => (
-        <text key={`x${i}`} x={i * (colW + 6) + colW / 2} y={chartH + 10} fontSize={8} fill={axisColor} textAnchor="middle">Q{i + 1}</text>
-      ))}
-      {legend && (
-        <text x={area.w / 2} y={area.h - 2} fontSize={Math.min(legendSize, 9)} fill={legendColor} textAnchor="middle">● Revenue  ● Costs</text>
-      )}
-    </g>
+/* ================================================================
+   SALES LINE CHART
+   ================================================================ */
+
+const SalesLineChart: React.FC = () => {
+  const s = useWidgetStyles();
+  const pc = s.paletteColors;
+
+  const option = useMemo(
+    () => ({
+      grid: { top: 25, bottom: 30, left: 40, right: 15 },
+      tooltip: { trigger: 'axis' },
+      xAxis: {
+        type: 'category',
+        data: MONTHS,
+        axisLabel: {
+          color: s.xAxisLabelColor,
+          fontSize: Math.min(s.xAxisLabelSize * 0.5, 8),
+          interval: 5,
+          fontFamily: s.dataFont,
+          rotate: s.xAxisRotation,
+        },
+        axisLine: { show: s.xAxisLineEnabled, lineStyle: { color: 'rgba(0,0,0,0.1)' } },
+        axisTick: { show: false },
+        boundaryGap: false,
+      },
+      yAxis: {
+        type: 'value',
+        show: s.yAxisEnabled,
+        min: 0,
+        max: 2000,
+        axisLabel: { color: s.axisLabelColor, fontSize: Math.min(s.yAxisLabelSize * 0.55, 9), fontFamily: s.dataFont },
+        splitLine: { show: s.gridEnabled, lineStyle: { color: 'rgba(0,0,0,0.06)' } },
+        axisLine: { show: s.yAxisLineEnabled },
+      },
+      legend: s.legendEnabled
+        ? {
+            show: true,
+            ...legendPlacement(s.legendPosition),
+            textStyle: { color: s.legendColor, fontSize: Math.min(s.legendFontSize * 0.55, 9), fontFamily: s.dataFont },
+          }
+        : { show: false },
+      series: [
+        {
+          name: 'Продажи',
+          type: 'line',
+          data: SALES_MONTHLY,
+          smooth: true,
+          symbol: 'none',
+          lineStyle: { color: pc[0], width: 2 },
+          areaStyle: {
+            color: {
+              type: 'linear',
+              x: 0, y: 0, x2: 0, y2: 1,
+              colorStops: [
+                { offset: 0, color: withAlpha(pc[0], 0.2) },
+                { offset: 1, color: withAlpha(pc[0], 0.02) },
+              ],
+            },
+          },
+          label: {
+            show: s.dataLabelsEnabled,
+            color: s.dataLabelsColor,
+            fontSize: Math.min(s.xAxisLabelSize * 0.5, 8),
+            fontFamily: s.dataFont,
+          },
+        },
+        {
+          name: 'Тренд',
+          type: 'line',
+          data: SALES_MONTHLY.map((_, i) => 700 + i * 40),
+          smooth: true,
+          symbol: 'none',
+          lineStyle: { color: pc[1] || pc[0], width: 1.5, type: 'dashed' },
+        },
+      ],
+    }),
+    [pc, s.axisLabelColor, s.xAxisLabelColor, s.dataFont, s.gridEnabled, s.legendEnabled, s.legendColor,
+      s.yAxisEnabled, s.yAxisLineEnabled, s.yAxisLabelSize, s.xAxisLineEnabled, s.xAxisLabelSize, s.xAxisRotation,
+      s.legendFontSize, s.legendPosition, s.dataLabelsEnabled, s.dataLabelsColor],
   );
-}
-
-function renderLineChart(area: Area, palette: string[], axisColor: string, grid: boolean, legend: boolean, legendColor: string, legendSize: number) {
-  const pts1 = [0.3, 0.6, 0.4, 0.8, 0.65, 0.9];
-  const pts2 = [0.5, 0.3, 0.55, 0.4, 0.7, 0.6];
-  const chartH = area.h - (legend ? 16 : 0);
-  const dx = area.w / (pts1.length - 1);
-  const toPath = (pts: number[]) => pts.map((p, i) => `${i === 0 ? 'M' : 'L'} ${i * dx} ${chartH * (1 - p)}`).join(' ');
 
   return (
-    <g transform={`translate(${area.x}, ${area.y})`}>
-      {grid && Array.from({ length: 5 }).map((_, i) => (
-        <line key={i} x1={0} y1={chartH * (i / 4)} x2={area.w} y2={chartH * (i / 4)} stroke="rgba(0,0,0,0.05)" />
-      ))}
-      <path d={toPath(pts1)} fill="none" stroke={palette[0]} strokeWidth={2.5} opacity={0.85} />
-      <path d={toPath(pts2)} fill="none" stroke={palette[1] ?? palette[0]} strokeWidth={2.5} opacity={0.85} />
-      {pts1.map((p, i) => <circle key={i} cx={i * dx} cy={chartH * (1 - p)} r={3} fill={palette[0]} />)}
-      {legend && (
-        <text x={area.w / 2} y={area.h - 2} fontSize={Math.min(legendSize, 9)} fill={legendColor} textAnchor="middle">● Actual  ● Forecast</text>
-      )}
-    </g>
+    <WidgetCard
+      title="Продажи, шт."
+      subtitle="По месяцам"
+      style={{ flex: 3 }}
+      headerRight={
+        <div style={{ fontSize: 8, color: s.axisLabelColor, textAlign: 'right', flexShrink: 0 }}>
+          <span>01 дек. 19</span>
+          <br />
+          <span style={{ fontWeight: 700, fontSize: 12, color: s.titleColor }}>1 758</span>
+        </div>
+      }
+    >
+      <EChart option={option} style={{ position: 'absolute', inset: 0 }} />
+    </WidgetCard>
   );
-}
+};
 
-function renderPieChart(area: Area, palette: string[], legend: boolean, legendColor: string, legendSize: number) {
-  const values = [35, 25, 20, 12, 8];
-  const total = values.reduce((a, b) => a + b, 0);
-  const cx = area.w / 2;
-  const cy = (area.h - (legend ? 16 : 0)) / 2;
-  const r = Math.min(cx, cy) - 4;
-  let startAngle = -Math.PI / 2;
+/* ================================================================
+   PROFITABILITY BAR CHART
+   ================================================================ */
+
+const ProfitBarChart: React.FC = () => {
+  const s = useWidgetStyles();
+
+  const option = useMemo(
+    () => ({
+      grid: { top: 10, bottom: 25, left: 35, right: 10 },
+      xAxis: {
+        type: 'category',
+        data: MONTHS,
+        axisLabel: {
+          color: s.xAxisLabelColor,
+          fontSize: Math.min(s.xAxisLabelSize * 0.5, 8),
+          interval: 5,
+          fontFamily: s.dataFont,
+          rotate: s.xAxisRotation,
+        },
+        axisLine: { show: s.xAxisLineEnabled, lineStyle: { color: 'rgba(0,0,0,0.1)' } },
+        axisTick: { show: false },
+      },
+      yAxis: {
+        type: 'value',
+        show: s.yAxisEnabled,
+        axisLabel: { color: s.axisLabelColor, fontSize: Math.min(s.yAxisLabelSize * 0.55, 9), formatter: '{value}%', fontFamily: s.dataFont },
+        splitLine: { show: s.gridEnabled, lineStyle: { color: 'rgba(0,0,0,0.06)' } },
+        axisLine: { show: s.yAxisLineEnabled },
+      },
+      series: [
+        {
+          type: 'bar',
+          data: PROFIT_PCT.map((v) => ({
+            value: v,
+            itemStyle: { color: v >= 0 ? s.indPositiveColor : s.indNegativeColor },
+          })),
+          barWidth: `${Math.max(20, Math.min(s.columnWidth, 80))}%`,
+          label: {
+            show: s.dataLabelsEnabled,
+            position: 'top',
+            color: s.dataLabelsColor,
+            fontSize: Math.min(s.xAxisLabelSize * 0.5, 8),
+            fontFamily: s.dataFont,
+            formatter: '{c}%',
+          },
+        },
+      ],
+      tooltip: {
+        trigger: 'axis',
+        formatter: (params: { name: string; value: number }[]) => {
+          const p = Array.isArray(params) ? params[0] : params;
+          return `${p.name}: ${p.value}%`;
+        },
+      },
+    }),
+    [s.paletteColors, s.axisLabelColor, s.xAxisLabelColor, s.dataFont, s.gridEnabled, s.indPositiveColor, s.indNegativeColor,
+      s.yAxisEnabled, s.yAxisLineEnabled, s.yAxisLabelSize, s.xAxisLineEnabled, s.xAxisLabelSize, s.xAxisRotation,
+      s.columnWidth, s.dataLabelsEnabled, s.dataLabelsColor],
+  );
 
   return (
-    <g transform={`translate(${area.x}, ${area.y})`}>
-      {values.map((val, i) => {
-        const angle = (val / total) * Math.PI * 2;
-        const endAngle = startAngle + angle;
-        const la = angle > Math.PI ? 1 : 0;
-        const x1 = cx + r * Math.cos(startAngle), y1 = cy + r * Math.sin(startAngle);
-        const x2 = cx + r * Math.cos(endAngle), y2 = cy + r * Math.sin(endAngle);
-        const d = `M ${cx} ${cy} L ${x1} ${y1} A ${r} ${r} 0 ${la} 1 ${x2} ${y2} Z`;
-        startAngle = endAngle;
-        return <path key={i} d={d} fill={palette[i % palette.length]} opacity={0.85} />;
-      })}
-      <circle cx={cx} cy={cy} r={r * 0.35} fill="white" opacity={0.9} />
-      {legend && (
-        <text x={area.w / 2} y={area.h - 2} fontSize={Math.min(legendSize, 9)} fill={legendColor} textAnchor="middle">● A ● B ● C ● D ● E</text>
-      )}
-    </g>
+    <WidgetCard title="Доходность" subtitle="По месяцам" style={{ flex: 3 }}>
+      <EChart option={option} style={{ position: 'absolute', inset: 0 }} />
+    </WidgetCard>
   );
-}
+};
 
-function renderGauge(area: Area, palette: string[]) {
-  const cx = area.w / 2, cy = area.h * 0.7, r = Math.min(cx, cy) - 8;
-  const arc = (startDeg: number, endDeg: number) => {
-    const s = (startDeg * Math.PI) / 180, e = (endDeg * Math.PI) / 180;
-    const la = endDeg - startDeg > 180 ? 1 : 0;
-    return `M ${cx + r * Math.cos(s)} ${cy + r * Math.sin(s)} A ${r} ${r} 0 ${la} 1 ${cx + r * Math.cos(e)} ${cy + r * Math.sin(e)}`;
+/* ================================================================
+   PROFITABILITY HEATMAP
+   ================================================================ */
+
+const ProfitHeatmap: React.FC = () => {
+  const s = useWidgetStyles();
+
+  const option = useMemo(
+    () => ({
+      grid: { top: 22, bottom: 25, left: 75, right: 5 },
+      xAxis: {
+        type: 'category',
+        data: MONTHS,
+        axisLabel: { color: s.axisLabelColor, fontSize: 6, interval: 11, fontFamily: s.dataFont, rotate: 0 },
+        axisLine: { show: false },
+        axisTick: { show: false },
+        splitArea: { show: false },
+      },
+      yAxis: {
+        type: 'category',
+        data: HEATMAP_CATS,
+        axisLabel: { color: s.axisLabelColor, fontSize: 6, fontFamily: s.dataFont },
+        axisLine: { show: false },
+        axisTick: { show: false },
+        splitArea: { show: false },
+      },
+      visualMap: {
+        min: -50,
+        max: 50,
+        show: true,
+        orient: 'horizontal',
+        left: 'center',
+        top: 0,
+        itemWidth: 8,
+        itemHeight: 60,
+        text: ['50%', '-50%'],
+        textStyle: { color: s.axisLabelColor, fontSize: 7 },
+        inRange: {
+          color: [s.indNegativeColor, '#E8E8E8', s.indPositiveColor],
+        },
+      },
+      series: [
+        {
+          type: 'heatmap',
+          data: HEATMAP_DATA,
+          label: { show: false },
+          emphasis: {
+            itemStyle: { shadowBlur: 4, shadowColor: 'rgba(0,0,0,0.2)' },
+          },
+        },
+      ],
+      tooltip: {
+        formatter: (p: { value: [number, number, number] }) =>
+          `${HEATMAP_CATS[p.value[1]]}<br/>${MONTHS[p.value[0]]}: <b>${p.value[2]}%</b>`,
+      },
+    }),
+    [s.axisLabelColor, s.dataFont, s.indPositiveColor, s.indNegativeColor],
+  );
+
+  return (
+    <WidgetCard title="Доходность, %" subtitle="По категориям и месяцам" style={{ flex: 1 }}>
+      <EChart option={option} style={{ position: 'absolute', inset: 0 }} />
+    </WidgetCard>
+  );
+};
+
+/* ================================================================
+   AVERAGE CHECK — boxplot + scatter
+   ================================================================ */
+
+const AvgCheckChart: React.FC = () => {
+  const s = useWidgetStyles();
+  const pc = s.paletteColors;
+
+  const option = useMemo(
+    () => ({
+      grid: { top: 10, bottom: 25, left: 110, right: 15 },
+      tooltip: { trigger: 'item' },
+      xAxis: {
+        type: 'value',
+        axisLabel: { color: s.axisLabelColor, fontSize: 8, fontFamily: s.dataFont },
+        splitLine: { show: s.gridEnabled, lineStyle: { color: 'rgba(0,0,0,0.06)' } },
+        axisLine: { show: false },
+      },
+      yAxis: {
+        type: 'category',
+        data: BOXPLOT_ITEMS.map((d) => `${d.name}   ${d.median} ₽`),
+        axisLabel: { color: s.axisLabelColor, fontSize: 8, fontFamily: s.dataFont },
+        axisLine: { show: false },
+        axisTick: { show: false },
+      },
+      series: [
+        {
+          type: 'boxplot',
+          data: BOXPLOT_ITEMS.map((d) => d.stats),
+          itemStyle: { color: withAlpha(pc[0], 0.2), borderColor: pc[0] },
+          boxWidth: [10, 18],
+        },
+        {
+          type: 'scatter',
+          data: SCATTER_PTS,
+          itemStyle: { color: withAlpha(pc[0], 0.35) },
+          symbolSize: 4,
+        },
+      ],
+    }),
+    [pc, s.axisLabelColor, s.dataFont, s.gridEnabled],
+  );
+
+  return (
+    <WidgetCard title="Средний чек, ₽" subtitle="По категориям, каждая точка — один заказ" style={{ flex: 3 }}>
+      <EChart option={option} style={{ position: 'absolute', inset: 0 }} />
+    </WidgetCard>
+  );
+};
+
+/* ================================================================
+   SPARKLINE SVG — tiny inline sparkline for table rows
+   ================================================================ */
+
+const SparklineSVG: React.FC<{ data: number[]; color: string }> = ({ data, color }) => {
+  const w = 60;
+  const h = 16;
+  const max = Math.max(...data);
+  const min = Math.min(...data);
+  const range = max - min || 1;
+  const pts = data
+    .map((v, i) => `${(i / (data.length - 1)) * w},${h - ((v - min) / range) * h}`)
+    .join(' ');
+
+  return (
+    <svg width={w} height={h} style={{ display: 'block' }}>
+      <polyline points={pts} fill="none" stroke={color} strokeWidth={1} />
+    </svg>
+  );
+};
+
+/* ================================================================
+   REGIONS TABLE
+   ================================================================ */
+
+const RegionsTable: React.FC = () => {
+  const s = useWidgetStyles();
+
+  const thStyle: React.CSSProperties = {
+    textAlign: 'right',
+    padding: '4px 5px',
+    color: s.dgHeaderColor,
+    fontWeight: 600,
+    fontSize: Math.min(s.dgHeaderFontSize * 0.6, 9),
+    position: 'sticky',
+    top: 0,
+    background: s.dgHeaderBg,
+    whiteSpace: 'nowrap',
   };
+
+  const tdStyle: React.CSSProperties = {
+    textAlign: 'right',
+    padding: '3px 5px',
+    color: s.dgBodyColor,
+    fontSize: Math.min(s.dgBodyFontSize * 0.6, 9),
+    whiteSpace: 'nowrap',
+  };
+
   return (
-    <g transform={`translate(${area.x}, ${area.y})`}>
-      <path d={arc(180, 360)} fill="none" stroke="#E0E0E0" strokeWidth={12} strokeLinecap="round" />
-      <path d={arc(180, 180 + 180 * 0.72)} fill="none" stroke={palette[0]} strokeWidth={12} strokeLinecap="round" opacity={0.85} />
-      <text x={cx} y={cy - 6} textAnchor="middle" fontSize={18} fontWeight={700} fill={palette[0]}>72%</text>
-    </g>
+    <WidgetCard
+      title="Регионы"
+      subtitle="Детальная таблица"
+      style={{ flex: 1 }}
+      headerRight={
+        <div style={{ display: 'flex', gap: 6, fontSize: 8, flexShrink: 0 }}>
+          <div>
+            <span style={{ color: s.axisLabelColor, fontSize: 8 }}>Регион </span>
+            <select style={{ fontSize: 8, border: '1px solid rgba(0,0,0,0.15)', borderRadius: 2, padding: '1px 4px', background: 'transparent', color: s.titleColor }}>
+              <option>(All)</option>
+            </select>
+          </div>
+          <div>
+            <span style={{ color: s.axisLabelColor, fontSize: 8 }}>Категория </span>
+            <select style={{ fontSize: 8, border: '1px solid rgba(0,0,0,0.15)', borderRadius: 2, padding: '1px 4px', background: 'transparent', color: s.titleColor }}>
+              <option>(All)</option>
+            </select>
+          </div>
+        </div>
+      }
+    >
+      <div style={{ overflow: 'auto', height: '100%', padding: '0 4px 4px', border: `1px solid ${s.dgOuterBorderColor}`, borderRadius: s.frameRadius }}>
+        <table style={{ width: '100%', borderCollapse: 'collapse', fontFamily: s.dataFont }}>
+          <thead>
+            <tr>
+              <th style={{ ...thStyle, textAlign: 'left', borderRight: `1px solid ${s.dgVertBorderColor}` }}>Регион</th>
+              <th style={{ ...thStyle, borderRight: `1px solid ${s.dgVertBorderColor}` }}>Кол-во</th>
+              <th style={{ ...thStyle, borderRight: `1px solid ${s.dgVertBorderColor}` }}>Продажи</th>
+              <th style={{ ...thStyle, borderRight: `1px solid ${s.dgVertBorderColor}` }}>Прибыль</th>
+              <th style={{ ...thStyle, borderRight: `1px solid ${s.dgVertBorderColor}` }}>Доходность</th>
+              <th style={{ ...thStyle, fontSize: 7, textAlign: 'center' }}>(график по месяцам)</th>
+            </tr>
+          </thead>
+          <tbody>
+            {REGIONS.map((r, i) => (
+              <tr
+                key={i}
+                style={{
+                  borderBottom: `1px solid ${s.dgHorizBorderColor}`,
+                  background: s.dgRowAltEnabled && i % 2 === 1 ? s.dgRowAltColor : 'transparent',
+                }}
+              >
+                <td style={{ ...tdStyle, textAlign: 'left', borderRight: `1px solid ${s.dgVertBorderColor}` }}>{r.name}</td>
+                <td style={{ ...tdStyle, borderRight: `1px solid ${s.dgVertBorderColor}` }}>{r.count}</td>
+                <td style={{ ...tdStyle, borderRight: `1px solid ${s.dgVertBorderColor}` }}>{fmt(r.sales)} ₽</td>
+                <td style={{ ...tdStyle, borderRight: `1px solid ${s.dgVertBorderColor}` }}>{fmt(r.profit)} ₽</td>
+                <td style={{ ...tdStyle, borderRight: `1px solid ${s.dgVertBorderColor}` }}>{r.pct}%</td>
+                <td style={{ padding: '2px 4px' }}>
+                  <SparklineSVG data={r.spark} color={s.paletteColors[0]} />
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </WidgetCard>
   );
-}
+};
 
-function renderIndicator(area: Area, valueColor: string, valueSize: number, positiveColor: string, font: string) {
-  const sz = Math.min(valueSize * 0.5, 28);
+const EChartsSheet: React.FC = () => {
   return (
-    <g transform={`translate(${area.x}, ${area.y})`}>
-      <text x={area.w / 2} y={area.h * 0.4} textAnchor="middle" fontSize={sz} fontWeight={700} fill={valueColor} fontFamily={font}>1,234</text>
-      <g transform={`translate(${area.w / 2 - 22}, ${area.h * 0.55})`}>
-        <polygon points="6,0 12,10 0,10" fill={positiveColor} />
-        <text x={18} y={9} fontSize={10} fill={positiveColor} fontFamily={font}>+12.5%</text>
-      </g>
-      <text x={area.w / 2} y={area.h * 0.82} textAnchor="middle" fontSize={9} fill="rgb(108,117,125)" fontFamily={font}>Цель: 1,500</text>
-    </g>
+    <div
+      className="dash-preview"
+      style={{
+        width: 1200,
+        height: 780,
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 6,
+        padding: 6,
+        fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif",
+        fontSize: 12,
+      }}
+    >
+      <DashHeader />
+      <KPIRow />
+      <div style={{ flex: 1, display: 'flex', gap: 6, minHeight: 0 }}>
+        {/* Left column */}
+        <div style={{ width: 270, display: 'flex', flexDirection: 'column', gap: 6, flexShrink: 0 }}>
+          <TopSalesChart />
+          <ProfitHeatmap />
+        </div>
+        {/* Center column */}
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 6, minWidth: 0 }}>
+          <SalesLineChart />
+          <ProfitBarChart />
+          <AvgCheckChart />
+        </div>
+        {/* Right column */}
+        <div style={{ width: 380, display: 'flex', flexDirection: 'column', flexShrink: 0 }}>
+          <RegionsTable />
+        </div>
+      </div>
+    </div>
   );
-}
+};
 
-function renderKPI(area: Area, palette: string[], valueColor: string, positiveColor: string, font: string) {
-  const sz = Math.min(22, area.h * 0.18);
+const VisApiSheet: React.FC = () => {
+  const s = useWidgetStyles();
+  const iframeRef = useRef<HTMLIFrameElement | null>(null);
+  const { theme, palette, globalTokens, themeName, getExportTheme, visApiUrl, visApiTargetOrigin } = useThemeStore();
+
+  useEffect(() => {
+    if (!iframeRef.current?.contentWindow || !visApiUrl) return;
+    iframeRef.current.contentWindow.postMessage(
+      {
+        type: 'VIS_THEME_UPDATE',
+        source: 'fd-visiology-theme-generator',
+        themeName,
+        payload: getExportTheme(),
+      },
+      visApiTargetOrigin || '*',
+    );
+  }, [theme, palette, globalTokens, themeName, getExportTheme, visApiUrl, visApiTargetOrigin]);
+
   return (
-    <g transform={`translate(${area.x}, ${area.y})`}>
-      <text x={area.w / 2} y={area.h * 0.4} textAnchor="middle" fontSize={sz} fontWeight={700} fill={valueColor} fontFamily={font}>
-        {(Math.random() * 10000).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-      </text>
-      <g transform={`translate(${area.w / 2 - 18}, ${area.h * 0.58})`}>
-        <polygon points="5,0 10,8 0,8" fill={positiveColor} />
-        <text x={14} y={7} fontSize={9} fill={positiveColor} fontFamily={font}>+{(Math.random() * 20).toFixed(1)}%</text>
-      </g>
-    </g>
+    <div
+      className="dash-preview"
+      style={{
+        width: 1200,
+        height: 780,
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 10,
+        padding: 12,
+        fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif",
+        fontSize: 12,
+      }}
+    >
+      <div
+        style={{
+          background: s.bgColor,
+          border: s.frameEnabled ? `1px solid ${s.frameColor}` : '1px solid rgba(0,0,0,0.08)',
+          borderRadius: s.frameRadius,
+          padding: '10px 12px',
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
+          <div>
+            <div style={{ color: s.titleColor, fontFamily: s.titleFont, fontWeight: 700, fontSize: Math.min(s.titleSize * 0.65, 16) }}>
+              Лист VisAPI — просмотр
+            </div>
+            <div style={{ color: s.axisLabelColor, fontSize: 10, marginTop: 2 }}>
+              {visApiUrl || 'URL не настроен'}
+            </div>
+          </div>
+          {visApiUrl && (
+            <div style={{
+              background: 'rgba(255,200,50,0.12)',
+              border: '1px solid rgba(255,200,50,0.3)',
+              borderRadius: 5,
+              padding: '4px 10px',
+              fontSize: 9,
+              color: '#ffc832',
+              whiteSpace: 'nowrap',
+              flexShrink: 0,
+            }}>
+              ⚠️ Тема не синхронизируется live — экспортируй JSON
+            </div>
+          )}
+        </div>
+      </div>
+
+      <div
+        style={{
+          flex: 1,
+          background: s.bgColor,
+          border: s.frameEnabled ? `1px solid ${s.frameColor}` : '1px solid rgba(0,0,0,0.08)',
+          borderRadius: s.frameRadius,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          outline: s.showGrid ? '1px dashed rgba(40,238,150,0.3)' : 'none',
+        }}
+      >
+        {visApiUrl ? (
+          <iframe
+            ref={iframeRef}
+            title="VisAPI Preview"
+            src={visApiUrl}
+            onLoad={() => {
+              if (!iframeRef.current?.contentWindow) return;
+              iframeRef.current.contentWindow.postMessage(
+                {
+                  type: 'VIS_THEME_UPDATE',
+                  source: 'fd-visiology-theme-generator',
+                  themeName,
+                  payload: getExportTheme(),
+                },
+                visApiTargetOrigin || '*',
+              );
+            }}
+            style={{
+              width: '100%',
+              height: '100%',
+              border: 'none',
+              borderRadius: s.frameRadius,
+              background: 'transparent',
+            }}
+          />
+        ) : (
+          <div style={{ textAlign: 'center', maxWidth: 700, padding: '20px 24px' }}>
+            <div style={{ fontSize: 44, marginBottom: 10, color: s.paletteColors[0] }}>◈</div>
+            <div style={{ color: s.titleColor, fontFamily: s.titleFont, fontSize: 18, fontWeight: 700, marginBottom: 6 }}>
+              VisAPI iframe не настроен
+            </div>
+            <div style={{ color: s.axisLabelColor, fontSize: 11, lineHeight: 1.7, marginBottom: 16 }}>
+              Введи URL дашборда Visiology в блоке <b>Theme → VisAPI — просмотр дашборда</b>.
+            </div>
+            {/* Workflow cards */}
+            <div style={{ display: 'flex', gap: 10, textAlign: 'left' }}>
+              {[
+                {
+                  icon: '🎨',
+                  title: 'Режим дизайна',
+                  desc: 'Оставайся на листе ECharts, настраивай цвета, шрифты, виджеты — всё обновляется в реальном времени.',
+                },
+                {
+                  icon: '📤',
+                  title: 'Экспорт в Visiology',
+                  desc: 'Нажми Экспорт JSON → загрузи файл в Admin Panel Visiology (Appearance → Themes). Это единственный способ применить тему.',
+                },
+                {
+                  icon: '📥',
+                  title: 'Импорт из Visiology',
+                  desc: 'Используй кнопку «Получить тему из Visiology API» в Theme → Импорт или загрузи JSON файл вручную.',
+                },
+              ].map(({ icon, title, desc }) => (
+                <div
+                  key={title}
+                  style={{
+                    flex: 1,
+                    background: 'rgba(255,255,255,0.04)',
+                    border: '1px solid rgba(255,255,255,0.08)',
+                    borderRadius: 8,
+                    padding: '10px 12px',
+                  }}
+                >
+                  <div style={{ fontSize: 20, marginBottom: 5 }}>{icon}</div>
+                  <div style={{ color: s.titleColor, fontWeight: 600, fontSize: 11, marginBottom: 4 }}>{title}</div>
+                  <div style={{ color: s.axisLabelColor, fontSize: 10, lineHeight: 1.6 }}>{desc}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
   );
-}
+};
 
-function renderTable(area: Area, palette: string[], headerBg: string, headerColor: string, bodyColor: string) {
-  const rows = 5, cols = 3;
-  const rowH = area.h / (rows + 1);
-  const colW = area.w / cols;
-  return (
-    <g transform={`translate(${area.x}, ${area.y})`}>
-      <rect x={0} y={0} width={area.w} height={rowH} fill={headerBg} rx={2} />
-      {Array.from({ length: cols }).map((_, c) => (
-        <text key={`h${c}`} x={c * colW + colW / 2} y={rowH - 5} textAnchor="middle" fontSize={9} fill={headerColor} fontWeight={600}>Col {c + 1}</text>
-      ))}
-      {Array.from({ length: rows }).map((_, r) => (
-        <g key={r}>
-          {r % 2 === 0 && <rect x={0} y={(r + 1) * rowH} width={area.w} height={rowH} fill="rgba(0,0,0,0.02)" />}
-          <line x1={0} y1={(r + 1) * rowH} x2={area.w} y2={(r + 1) * rowH} stroke="rgba(0,0,0,0.06)" />
-          {Array.from({ length: cols }).map((_, c) => (
-            <text key={`${r}-${c}`} x={c * colW + colW / 2} y={(r + 1) * rowH + rowH - 5} textAnchor="middle" fontSize={9} fill={bodyColor}>{(r * cols + c + 1) * 42}</text>
-          ))}
-        </g>
-      ))}
-    </g>
-  );
-}
-
-function renderOlapTable(area: Area, palette: string[]) {
-  const rows = 4, cols = 4;
-  const rowH = area.h / (rows + 1), colW = area.w / cols;
-  return (
-    <g transform={`translate(${area.x}, ${area.y})`}>
-      <rect width={area.w} height={rowH} fill={palette[0]} opacity={0.15} rx={2} />
-      <rect width={colW} height={area.h} fill={palette[0]} opacity={0.08} />
-      {Array.from({ length: rows + 1 }).map((_, r) => (
-        <line key={r} x1={0} y1={r * rowH} x2={area.w} y2={r * rowH} stroke="rgba(0,0,0,0.08)" />
-      ))}
-      {Array.from({ length: cols }).map((_, c) => (
-        <line key={c} x1={c * colW} y1={0} x2={c * colW} y2={area.h} stroke="rgba(0,0,0,0.08)" />
-      ))}
-      <text x={colW / 2} y={rowH - 5} textAnchor="middle" fontSize={8} fontWeight={600} fill="rgb(73,80,87)">Dim</text>
-      {['Jan', 'Feb', 'Mar'].map((m, i) => (
-        <text key={m} x={(i + 1) * colW + colW / 2} y={rowH - 5} textAnchor="middle" fontSize={8} fontWeight={600} fill="rgb(73,80,87)">{m}</text>
-      ))}
-    </g>
-  );
-}
-
-function renderFilter(area: Area, palette: string[]) {
-  const items = ['Регион А', 'Регион Б', 'Регион В', 'Регион Г'];
-  const itemH = 22;
-  return (
-    <g transform={`translate(${area.x}, ${area.y})`}>
-      <rect width={area.w} height={22} rx={4} fill="rgba(0,0,0,0.04)" stroke="rgba(0,0,0,0.1)" strokeWidth={0.5} />
-      <text x={8} y={15} fontSize={9} fill="rgb(180,180,180)">Поиск...</text>
-      {items.map((item, i) => (
-        <g key={i} transform={`translate(0, ${26 + i * itemH})`}>
-          <rect x={4} y={2} width={12} height={12} rx={2} fill={i < 2 ? palette[0] : 'none'} stroke={palette[0]} strokeWidth={1} opacity={0.7} />
-          {i < 2 && <polyline points="6,8 9,11 14,5" fill="none" stroke="white" strokeWidth={1.5} />}
-          <text x={22} y={12} fontSize={9} fill="rgb(73,80,87)">{item}</text>
-        </g>
-      ))}
-    </g>
-  );
-}
-
-function renderDateFilter(area: Area, palette: string[]) {
-  return (
-    <g transform={`translate(${area.x}, ${area.y})`}>
-      <rect width={area.w} height={28} rx={4} fill="rgba(0,0,0,0.04)" stroke="rgba(0,0,0,0.1)" strokeWidth={0.5} />
-      <text x={10} y={18} fontSize={10} fill="rgb(73,80,87)">01.01.2024 — 31.12.2024</text>
-      <rect x={area.w - 28} y={4} width={20} height={20} rx={3} fill={palette[0]} opacity={0.2} />
-      <text x={area.w - 18} y={18} textAnchor="middle" fontSize={10} fill={palette[0]}>▼</text>
-    </g>
-  );
-}
-
-function renderText(area: Area, color: string) {
-  return (
-    <g transform={`translate(${area.x}, ${area.y})`}>
-      <text x={area.w / 2} y={area.h / 2 - 8} textAnchor="middle" fontSize={14} fontWeight={600} fill={color}>Текстовый блок</text>
-      <text x={area.w / 2} y={area.h / 2 + 12} textAnchor="middle" fontSize={10} fill="rgb(108,117,125)">Произвольный контент</text>
-    </g>
-  );
-}
-
-// ============ SHEET LAYOUTS ============
-
-type WidgetDef = { col: number; row: number; colSpan: number; rowSpan: number; title: string; type: string };
-
-const SHEET_1: WidgetDef[] = [
-  { col: 0, row: 0, colSpan: 1, rowSpan: 1, title: 'KPI Revenue', type: 'kpi' },
-  { col: 1, row: 0, colSpan: 1, rowSpan: 1, title: 'KPI Profit', type: 'kpi' },
-  { col: 2, row: 0, colSpan: 1, rowSpan: 1, title: 'KPI Growth', type: 'kpi' },
-  { col: 3, row: 0, colSpan: 1, rowSpan: 1, title: 'KPI Users', type: 'kpi' },
-  { col: 0, row: 1, colSpan: 2, rowSpan: 1, title: 'Column Chart', type: 'column' },
-  { col: 2, row: 1, colSpan: 2, rowSpan: 1, title: 'Line Chart', type: 'line' },
-];
-
-const SHEET_2: WidgetDef[] = [
-  { col: 0, row: 0, colSpan: 2, rowSpan: 1, title: 'Pie Chart', type: 'pie' },
-  { col: 2, row: 0, colSpan: 2, rowSpan: 1, title: 'Bar Chart', type: 'bar' },
-  { col: 0, row: 1, colSpan: 3, rowSpan: 1, title: 'Data Grid', type: 'table' },
-  { col: 3, row: 1, colSpan: 1, rowSpan: 1, title: 'Gauge', type: 'gauge' },
-];
-
-const SHEET_3: WidgetDef[] = [
-  { col: 0, row: 0, colSpan: 3, rowSpan: 1, title: 'OLAP Table', type: 'olap' },
-  { col: 3, row: 0, colSpan: 1, rowSpan: 1, title: 'Indicator', type: 'indicator' },
-  { col: 0, row: 1, colSpan: 1, rowSpan: 1, title: 'Filter', type: 'filter' },
-  { col: 1, row: 1, colSpan: 1, rowSpan: 1, title: 'Date Filter', type: 'dateFilter' },
-  { col: 2, row: 1, colSpan: 2, rowSpan: 1, title: 'Text Widget', type: 'text' },
-];
-
-const SHEETS = { 1: SHEET_1, 2: SHEET_2, 3: SHEET_3 };
+/* ================================================================
+   SHEET SWITCHER
+   ================================================================ */
 
 export const DashboardPreview: React.FC = () => {
   const { activeSheet } = useThemeStore();
-  const layout = SHEETS[activeSheet];
-  const COLS = 4;
-  const totalW = COLS * CELL_W + (COLS - 1) * GAP;
-  const maxRow = Math.max(...layout.map((w) => w.row)) + 1;
-  const totalH = maxRow * CELL_H + (maxRow - 1) * GAP;
-
-  return (
-    <svg
-      width={totalW + 24}
-      height={totalH + 24}
-      viewBox={`0 0 ${totalW + 24} ${totalH + 24}`}
-      style={{ borderRadius: 8 }}
-    >
-      {layout.map((item, i) => {
-        const wx = 12 + item.col * (CELL_W + GAP);
-        const wy = 12 + item.row * (CELL_H + GAP);
-        const ww = item.colSpan * CELL_W + (item.colSpan - 1) * GAP;
-        const wh = item.rowSpan * CELL_H + (item.rowSpan - 1) * GAP;
-        return <WidgetStub key={i} x={wx} y={wy} w={ww} h={wh} title={item.title} type={item.type} />;
-      })}
-    </svg>
-  );
+  return activeSheet === 'visapi' ? <VisApiSheet /> : <EChartsSheet />;
 };

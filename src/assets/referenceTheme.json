@@ -169,8 +169,8 @@
         "IsManualColumnSettings": false,
         "Column": {
           "$type": "Visiology.DashboardService.Modules.Dashboards.Domain.Models.Widget.Column, Visiology.DashboardService.Modules.Dashboards.Domain",
-          "Width": 20.0,
-          "Padding": 10.0,
+          "Width": 20,
+          "Padding": 10,
           "IsGrouping": true,
           "SelectStyle": {
             "$type": "Visiology.DashboardService.Modules.Dashboards.Domain.Models.Widget.SelectStyle, Visiology.DashboardService.Modules.Dashboards.Domain",
@@ -238,7 +238,7 @@
             "$type": "Visiology.DashboardService.Modules.Dashboards.Domain.Models.Widget.ZoomStyle, Visiology.DashboardService.Modules.Dashboards.Domain",
             "FillerColor": "rgba(140,189,253,0.15)",
             "BackgroundColor": "rgba(47,69,84,0)",
-            "MoveHandleSize": 7.0,
+            "MoveHandleSize": 7,
             "HandleStyle": {
               "$type": "Visiology.DashboardService.Modules.Dashboards.Domain.Models.Widget.ZoomHandleStyle, Visiology.DashboardService.Modules.Dashboards.Domain",
               "Color": "#FFF"
@@ -252,7 +252,7 @@
               "LineStyle": {
                 "$type": "Visiology.DashboardService.Modules.Dashboards.Domain.Models.Widget.ZoomLineStyle, Visiology.DashboardService.Modules.Dashboards.Domain",
                 "Color": "#D2DBEE",
-                "Opacity": 1.0
+                "Opacity": 1
               },
               "AreaStyle": {
                 "$type": "Visiology.DashboardService.Modules.Dashboards.Domain.Models.Widget.ZoomAreaStyle, Visiology.DashboardService.Modules.Dashboards.Domain",
@@ -265,7 +265,7 @@
               "LineStyle": {
                 "$type": "Visiology.DashboardService.Modules.Dashboards.Domain.Models.Widget.ZoomLineStyle, Visiology.DashboardService.Modules.Dashboards.Domain",
                 "Color": "#8FB0F7",
-                "Opacity": 1.0
+                "Opacity": 1
               },
               "AreaStyle": {
                 "$type": "Visiology.DashboardService.Modules.Dashboards.Domain.Models.Widget.ZoomAreaStyle, Visiology.DashboardService.Modules.Dashboards.Domain",
@@ -479,7 +479,7 @@
             "$type": "Visiology.DashboardService.Modules.Dashboards.Domain.Models.Widget.ZoomStyle, Visiology.DashboardService.Modules.Dashboards.Domain",
             "FillerColor": "rgba(140,189,253,0.15)",
             "BackgroundColor": "rgba(47,69,84,0)",
-            "MoveHandleSize": 7.0,
+            "MoveHandleSize": 7,
             "HandleStyle": {
               "$type": "Visiology.DashboardService.Modules.Dashboards.Domain.Models.Widget.ZoomHandleStyle, Visiology.DashboardService.Modules.Dashboards.Domain",
               "Color": "#FFF"
@@ -493,7 +493,7 @@
               "LineStyle": {
                 "$type": "Visiology.DashboardService.Modules.Dashboards.Domain.Models.Widget.ZoomLineStyle, Visiology.DashboardService.Modules.Dashboards.Domain",
                 "Color": "#D2DBEE",
-                "Opacity": 1.0
+                "Opacity": 1
               },
               "AreaStyle": {
                 "$type": "Visiology.DashboardService.Modules.Dashboards.Domain.Models.Widget.ZoomAreaStyle, Visiology.DashboardService.Modules.Dashboards.Domain",
@@ -506,7 +506,7 @@
               "LineStyle": {
                 "$type": "Visiology.DashboardService.Modules.Dashboards.Domain.Models.Widget.ZoomLineStyle, Visiology.DashboardService.Modules.Dashboards.Domain",
                 "Color": "#8FB0F7",
-                "Opacity": 1.0
+                "Opacity": 1
               },
               "AreaStyle": {
                 "$type": "Visiology.DashboardService.Modules.Dashboards.Domain.Models.Widget.ZoomAreaStyle, Visiology.DashboardService.Modules.Dashboards.Domain",
@@ -710,11 +710,11 @@
         },
         "BoxShadow": {
           "$type": "Visiology.DashboardService.Modules.Dashboards.Domain.Models.Widget.BoxShadow, Visiology.DashboardService.Modules.Dashboards.Domain",
-          "X": 3,
-          "Y": 3,
+          "X": 0,
+          "Y": 0,
           "Blur": 0,
           "Spread": 0,
-          "Color": "rgb(118,219,155)"
+          "Color": "rgba(0,0,0,0)"
         },
         "ZIndex": 1,
         "AllowExport": true,
@@ -796,7 +796,7 @@
       },
       {
         "$type": "Visiology.DashboardService.Modules.Dashboards.Domain.Models.Widget.Chart, Visiology.DashboardService.Modules.Dashboards.Domain",
-        "DefaultLineWidth": 2.0,
+        "DefaultLineWidth": 2,
         "Legend": {
           "$type": "Visiology.DashboardService.Modules.Dashboards.Domain.Models.Widget.Common.Legend, Visiology.DashboardService.Modules.Dashboards.Domain",
           "Enabled": true,
@@ -824,7 +824,7 @@
             "$type": "Visiology.DashboardService.Modules.Dashboards.Domain.Models.Widget.ZoomStyle, Visiology.DashboardService.Modules.Dashboards.Domain",
             "FillerColor": "rgba(140,189,253,0.15)",
             "BackgroundColor": "rgba(47,69,84,0)",
-            "MoveHandleSize": 7.0,
+            "MoveHandleSize": 7,
             "HandleStyle": {
               "$type": "Visiology.DashboardService.Modules.Dashboards.Domain.Models.Widget.ZoomHandleStyle, Visiology.DashboardService.Modules.Dashboards.Domain",
               "Color": "#FFF"
@@ -838,7 +838,7 @@
               "LineStyle": {
                 "$type": "Visiology.DashboardService.Modules.Dashboards.Domain.Models.Widget.ZoomLineStyle, Visiology.DashboardService.Modules.Dashboards.Domain",
                 "Color": "#D2DBEE",
-                "Opacity": 1.0
+                "Opacity": 1
               },
               "AreaStyle": {
                 "$type": "Visiology.DashboardService.Modules.Dashboards.Domain.Models.Widget.ZoomAreaStyle, Visiology.DashboardService.Modules.Dashboards.Domain",
@@ -851,7 +851,7 @@
               "LineStyle": {
                 "$type": "Visiology.DashboardService.Modules.Dashboards.Domain.Models.Widget.ZoomLineStyle, Visiology.DashboardService.Modules.Dashboards.Domain",
                 "Color": "#8FB0F7",
-                "Opacity": 1.0
+                "Opacity": 1
               },
               "AreaStyle": {
                 "$type": "Visiology.DashboardService.Modules.Dashboards.Domain.Models.Widget.ZoomAreaStyle, Visiology.DashboardService.Modules.Dashboards.Domain",
@@ -1065,7 +1065,7 @@
             "$type": "Visiology.DashboardService.Modules.Dashboards.Domain.Models.Widget.ZoomStyle, Visiology.DashboardService.Modules.Dashboards.Domain",
             "FillerColor": "rgba(140,189,253,0.15)",
             "BackgroundColor": "rgba(47,69,84,0)",
-            "MoveHandleSize": 7.0,
+            "MoveHandleSize": 7,
             "HandleStyle": {
               "$type": "Visiology.DashboardService.Modules.Dashboards.Domain.Models.Widget.ZoomHandleStyle, Visiology.DashboardService.Modules.Dashboards.Domain",
               "Color": "#FFF"
@@ -1079,7 +1079,7 @@
               "LineStyle": {
                 "$type": "Visiology.DashboardService.Modules.Dashboards.Domain.Models.Widget.ZoomLineStyle, Visiology.DashboardService.Modules.Dashboards.Domain",
                 "Color": "#D2DBEE",
-                "Opacity": 1.0
+                "Opacity": 1
               },
               "AreaStyle": {
                 "$type": "Visiology.DashboardService.Modules.Dashboards.Domain.Models.Widget.ZoomAreaStyle, Visiology.DashboardService.Modules.Dashboards.Domain",
@@ -1092,7 +1092,7 @@
               "LineStyle": {
                 "$type": "Visiology.DashboardService.Modules.Dashboards.Domain.Models.Widget.ZoomLineStyle, Visiology.DashboardService.Modules.Dashboards.Domain",
                 "Color": "#8FB0F7",
-                "Opacity": 1.0
+                "Opacity": 1
               },
               "AreaStyle": {
                 "$type": "Visiology.DashboardService.Modules.Dashboards.Domain.Models.Widget.ZoomAreaStyle, Visiology.DashboardService.Modules.Dashboards.Domain",
@@ -1296,11 +1296,11 @@
         },
         "BoxShadow": {
           "$type": "Visiology.DashboardService.Modules.Dashboards.Domain.Models.Widget.BoxShadow, Visiology.DashboardService.Modules.Dashboards.Domain",
-          "X": 3,
-          "Y": 3,
+          "X": 0,
+          "Y": 0,
           "Blur": 0,
           "Spread": 0,
-          "Color": "rgb(251,168,111)"
+          "Color": "rgba(0,0,0,0)"
         },
         "ZIndex": 3,
         "AllowExport": true,
@@ -1385,8 +1385,8 @@
         "IsManualColumnSettings": false,
         "Column": {
           "$type": "Visiology.DashboardService.Modules.Dashboards.Domain.Models.Widget.Column, Visiology.DashboardService.Modules.Dashboards.Domain",
-          "Width": 20.0,
-          "Padding": 10.0,
+          "Width": 20,
+          "Padding": 10,
           "IsGrouping": true,
           "SelectStyle": {
             "$type": "Visiology.DashboardService.Modules.Dashboards.Domain.Models.Widget.SelectStyle, Visiology.DashboardService.Modules.Dashboards.Domain",
@@ -1454,7 +1454,7 @@
             "$type": "Visiology.DashboardService.Modules.Dashboards.Domain.Models.Widget.ZoomStyle, Visiology.DashboardService.Modules.Dashboards.Domain",
             "FillerColor": "rgba(140,189,253,0.15)",
             "BackgroundColor": "rgba(47,69,84,0)",
-            "MoveHandleSize": 7.0,
+            "MoveHandleSize": 7,
             "HandleStyle": {
               "$type": "Visiology.DashboardService.Modules.Dashboards.Domain.Models.Widget.ZoomHandleStyle, Visiology.DashboardService.Modules.Dashboards.Domain",
               "Color": "#FFF"
@@ -1468,7 +1468,7 @@
               "LineStyle": {
                 "$type": "Visiology.DashboardService.Modules.Dashboards.Domain.Models.Widget.ZoomLineStyle, Visiology.DashboardService.Modules.Dashboards.Domain",
                 "Color": "#D2DBEE",
-                "Opacity": 1.0
+                "Opacity": 1
               },
               "AreaStyle": {
                 "$type": "Visiology.DashboardService.Modules.Dashboards.Domain.Models.Widget.ZoomAreaStyle, Visiology.DashboardService.Modules.Dashboards.Domain",
@@ -1481,7 +1481,7 @@
               "LineStyle": {
                 "$type": "Visiology.DashboardService.Modules.Dashboards.Domain.Models.Widget.ZoomLineStyle, Visiology.DashboardService.Modules.Dashboards.Domain",
                 "Color": "#8FB0F7",
-                "Opacity": 1.0
+                "Opacity": 1
               },
               "AreaStyle": {
                 "$type": "Visiology.DashboardService.Modules.Dashboards.Domain.Models.Widget.ZoomAreaStyle, Visiology.DashboardService.Modules.Dashboards.Domain",
@@ -1695,7 +1695,7 @@
             "$type": "Visiology.DashboardService.Modules.Dashboards.Domain.Models.Widget.ZoomStyle, Visiology.DashboardService.Modules.Dashboards.Domain",
             "FillerColor": "rgba(140,189,253,0.15)",
             "BackgroundColor": "rgba(47,69,84,0)",
-            "MoveHandleSize": 7.0,
+            "MoveHandleSize": 7,
             "HandleStyle": {
               "$type": "Visiology.DashboardService.Modules.Dashboards.Domain.Models.Widget.ZoomHandleStyle, Visiology.DashboardService.Modules.Dashboards.Domain",
               "Color": "#FFF"
@@ -1709,7 +1709,7 @@
               "LineStyle": {
                 "$type": "Visiology.DashboardService.Modules.Dashboards.Domain.Models.Widget.ZoomLineStyle, Visiology.DashboardService.Modules.Dashboards.Domain",
                 "Color": "#D2DBEE",
-                "Opacity": 1.0
+                "Opacity": 1
               },
               "AreaStyle": {
                 "$type": "Visiology.DashboardService.Modules.Dashboards.Domain.Models.Widget.ZoomAreaStyle, Visiology.DashboardService.Modules.Dashboards.Domain",
@@ -1722,7 +1722,7 @@
               "LineStyle": {
                 "$type": "Visiology.DashboardService.Modules.Dashboards.Domain.Models.Widget.ZoomLineStyle, Visiology.DashboardService.Modules.Dashboards.Domain",
                 "Color": "#8FB0F7",
-                "Opacity": 1.0
+                "Opacity": 1
               },
               "AreaStyle": {
                 "$type": "Visiology.DashboardService.Modules.Dashboards.Domain.Models.Widget.ZoomAreaStyle, Visiology.DashboardService.Modules.Dashboards.Domain",
@@ -1926,11 +1926,11 @@
         },
         "BoxShadow": {
           "$type": "Visiology.DashboardService.Modules.Dashboards.Domain.Models.Widget.BoxShadow, Visiology.DashboardService.Modules.Dashboards.Domain",
-          "X": 3,
-          "Y": 3,
+          "X": 0,
+          "Y": 0,
           "Blur": 0,
           "Spread": 0,
-          "Color": "rgb(158,160,246)"
+          "Color": "rgba(0,0,0,0)"
         },
         "ZIndex": 2,
         "AllowExport": true,
@@ -2193,11 +2193,11 @@
         },
         "BoxShadow": {
           "$type": "Visiology.DashboardService.Modules.Dashboards.Domain.Models.Widget.BoxShadow, Visiology.DashboardService.Modules.Dashboards.Domain",
-          "X": 3,
-          "Y": 3,
+          "X": 0,
+          "Y": 0,
           "Blur": 0,
           "Spread": 0,
-          "Color": "rgb(133,178,249)"
+          "Color": "rgba(0,0,0,0)"
         },
         "ZIndex": 4,
         "AllowExport": true,
@@ -2421,11 +2421,11 @@
         },
         "BoxShadow": {
           "$type": "Visiology.DashboardService.Modules.Dashboards.Domain.Models.Widget.BoxShadow, Visiology.DashboardService.Modules.Dashboards.Domain",
-          "X": 3,
-          "Y": 3,
+          "X": 0,
+          "Y": 0,
           "Blur": 0,
           "Spread": 0,
-          "Color": "rgb(109,211,200)"
+          "Color": "rgba(0,0,0,0)"
         },
         "ZIndex": 4,
         "AllowExport": true,
@@ -2662,11 +2662,11 @@
         },
         "BoxShadow": {
           "$type": "Visiology.DashboardService.Modules.Dashboards.Domain.Models.Widget.BoxShadow, Visiology.DashboardService.Modules.Dashboards.Domain",
-          "X": 3,
-          "Y": 3,
+          "X": 0,
+          "Y": 0,
           "Blur": 0,
           "Spread": 0,
-          "Color": "rgb(255,135,128)"
+          "Color": "rgba(0,0,0,0)"
         },
         "ZIndex": 0,
         "AllowExport": true,
@@ -2753,7 +2753,7 @@
         "IsManualColumnSettings": false,
         "Column": {
           "$type": "Visiology.DashboardService.Modules.Dashboards.Domain.Models.Widget.Column, Visiology.DashboardService.Modules.Dashboards.Domain",
-          "Width": 20.0,
+          "Width": 20,
           "Padding": 0.1,
           "IsGrouping": true,
           "SelectStyle": {
@@ -3294,11 +3294,11 @@
         },
         "BoxShadow": {
           "$type": "Visiology.DashboardService.Modules.Dashboards.Domain.Models.Widget.BoxShadow, Visiology.DashboardService.Modules.Dashboards.Domain",
-          "X": 3,
-          "Y": 3,
+          "X": 0,
+          "Y": 0,
           "Blur": 0,
           "Spread": 0,
-          "Color": "rgb(118,219,155)"
+          "Color": "rgba(0,0,0,0)"
         },
         "ZIndex": 1,
         "AllowExport": true,
@@ -3380,7 +3380,7 @@
       },
       {
         "$type": "Visiology.DashboardService.Modules.Dashboards.Domain.Models.Widget.Highcharts.HighchartsChart, Visiology.DashboardService.Modules.Dashboards.Domain",
-        "DefaultLineWidth": 2.0,
+        "DefaultLineWidth": 2,
         "Legend": {
           "$type": "Visiology.DashboardService.Modules.Dashboards.Domain.Models.Widget.Common.Legend, Visiology.DashboardService.Modules.Dashboards.Domain",
           "Enabled": true,
@@ -3880,11 +3880,11 @@
         },
         "BoxShadow": {
           "$type": "Visiology.DashboardService.Modules.Dashboards.Domain.Models.Widget.BoxShadow, Visiology.DashboardService.Modules.Dashboards.Domain",
-          "X": 3,
-          "Y": 3,
+          "X": 0,
+          "Y": 0,
           "Blur": 0,
           "Spread": 0,
-          "Color": "rgb(251,168,111)"
+          "Color": "rgba(0,0,0,0)"
         },
         "ZIndex": 3,
         "AllowExport": true,
@@ -3969,7 +3969,7 @@
         "IsManualColumnSettings": false,
         "Column": {
           "$type": "Visiology.DashboardService.Modules.Dashboards.Domain.Models.Widget.Column, Visiology.DashboardService.Modules.Dashboards.Domain",
-          "Width": 20.0,
+          "Width": 20,
           "Padding": 0.1,
           "IsGrouping": true,
           "SelectStyle": {
@@ -4510,11 +4510,11 @@
         },
         "BoxShadow": {
           "$type": "Visiology.DashboardService.Modules.Dashboards.Domain.Models.Widget.BoxShadow, Visiology.DashboardService.Modules.Dashboards.Domain",
-          "X": 3,
-          "Y": 3,
+          "X": 0,
+          "Y": 0,
           "Blur": 0,
           "Spread": 0,
-          "Color": "rgb(158,160,246)"
+          "Color": "rgba(0,0,0,0)"
         },
         "ZIndex": 2,
         "AllowExport": true,
@@ -4693,11 +4693,11 @@
         },
         "BoxShadow": {
           "$type": "Visiology.DashboardService.Modules.Dashboards.Domain.Models.Widget.BoxShadow, Visiology.DashboardService.Modules.Dashboards.Domain",
-          "X": 3,
-          "Y": 3,
+          "X": 0,
+          "Y": 0,
           "Blur": 0,
           "Spread": 0,
-          "Color": "rgb(159,169,183)"
+          "Color": "rgba(0,0,0,0)"
         },
         "ZIndex": 6,
         "AllowExport": true,
@@ -4881,11 +4881,11 @@
         },
         "BoxShadow": {
           "$type": "Visiology.DashboardService.Modules.Dashboards.Domain.Models.Widget.BoxShadow, Visiology.DashboardService.Modules.Dashboards.Domain",
-          "X": 3,
-          "Y": 3,
+          "X": 0,
+          "Y": 0,
           "Blur": 0,
           "Spread": 0,
-          "Color": "rgb(159,169,183)"
+          "Color": "rgba(0,0,0,0)"
         },
         "ZIndex": 5,
         "AllowExport": true,
@@ -5042,11 +5042,11 @@
         },
         "BoxShadow": {
           "$type": "Visiology.DashboardService.Modules.Dashboards.Domain.Models.Widget.BoxShadow, Visiology.DashboardService.Modules.Dashboards.Domain",
-          "X": 3,
-          "Y": 3,
+          "X": 0,
+          "Y": 0,
           "Blur": 0,
           "Spread": 0,
-          "Color": "rgb(243,142,192)"
+          "Color": "rgba(0,0,0,0)"
         },
         "ZIndex": 9,
         "AllowExport": true,
@@ -5301,11 +5301,11 @@
         },
         "BoxShadow": {
           "$type": "Visiology.DashboardService.Modules.Dashboards.Domain.Models.Widget.BoxShadow, Visiology.DashboardService.Modules.Dashboards.Domain",
-          "X": 3,
-          "Y": 3,
+          "X": 0,
+          "Y": 0,
           "Blur": 0,
           "Spread": 0,
-          "Color": "rgb(133,178,249)"
+          "Color": "rgba(0,0,0,0)"
         },
         "ZIndex": 4,
         "AllowExport": true,
@@ -5642,11 +5642,11 @@
         },
         "BoxShadow": {
           "$type": "Visiology.DashboardService.Modules.Dashboards.Domain.Models.Widget.BoxShadow, Visiology.DashboardService.Modules.Dashboards.Domain",
-          "X": 3,
-          "Y": 3,
+          "X": 0,
+          "Y": 0,
           "Blur": 0,
           "Spread": 0,
-          "Color": "rgb(201,150,250)"
+          "Color": "rgba(0,0,0,0)"
         },
         "ZIndex": 7,
         "AllowExport": true,
@@ -5947,11 +5947,11 @@
         },
         "BoxShadow": {
           "$type": "Visiology.DashboardService.Modules.Dashboards.Domain.Models.Widget.BoxShadow, Visiology.DashboardService.Modules.Dashboards.Domain",
-          "X": 3,
-          "Y": 3,
+          "X": 0,
+          "Y": 0,
           "Blur": 0,
           "Spread": 0,
-          "Color": "rgb(101,210,228)"
+          "Color": "rgba(0,0,0,0)"
         },
         "ZIndex": 8,
         "AllowExport": true,
@@ -6119,11 +6119,11 @@
         },
         "BoxShadow": {
           "$type": "Visiology.DashboardService.Modules.Dashboards.Domain.Models.Widget.BoxShadow, Visiology.DashboardService.Modules.Dashboards.Domain",
-          "X": 3,
-          "Y": 3,
+          "X": 0,
+          "Y": 0,
           "Blur": 0,
           "Spread": 0,
-          "Color": "rgb(242,208,102)"
+          "Color": "rgba(0,0,0,0)"
         },
         "ZIndex": 12,
         "AllowExport": true,
@@ -6288,11 +6288,11 @@
         },
         "BoxShadow": {
           "$type": "Visiology.DashboardService.Modules.Dashboards.Domain.Models.Widget.BoxShadow, Visiology.DashboardService.Modules.Dashboards.Domain",
-          "X": null,
-          "Y": null,
-          "Blur": null,
-          "Spread": null,
-          "Color": null
+          "X": 0,
+          "Y": 0,
+          "Blur": 0,
+          "Spread": 0,
+          "Color": "rgba(0,0,0,0)"
         },
         "ZIndex": 0,
         "AllowExport": true,
@@ -6471,11 +6471,11 @@
         },
         "BoxShadow": {
           "$type": "Visiology.DashboardService.Modules.Dashboards.Domain.Models.Widget.BoxShadow, Visiology.DashboardService.Modules.Dashboards.Domain",
-          "X": 3,
-          "Y": 3,
+          "X": 0,
+          "Y": 0,
           "Blur": 0,
           "Spread": 0,
-          "Color": "rgb(109,211,200)"
+          "Color": "rgba(0,0,0,0)"
         },
         "ZIndex": 4,
         "AllowExport": true,
@@ -6705,11 +6705,11 @@
         },
         "BoxShadow": {
           "$type": "Visiology.DashboardService.Modules.Dashboards.Domain.Models.Widget.BoxShadow, Visiology.DashboardService.Modules.Dashboards.Domain",
-          "X": 3,
-          "Y": 3,
+          "X": 0,
+          "Y": 0,
           "Blur": 0,
           "Spread": 0,
-          "Color": "rgb(255,135,128)"
+          "Color": "rgba(0,0,0,0)"
         },
         "ZIndex": 0,
         "AllowExport": true,
@@ -6912,11 +6912,11 @@
         },
         "BoxShadow": {
           "$type": "Visiology.DashboardService.Modules.Dashboards.Domain.Models.Widget.BoxShadow, Visiology.DashboardService.Modules.Dashboards.Domain",
-          "X": 3,
-          "Y": 3,
+          "X": 0,
+          "Y": 0,
           "Blur": 0,
           "Spread": 0,
-          "Color": "rgb(242,208,102)"
+          "Color": "rgba(0,0,0,0)"
         },
         "ZIndex": 12,
         "AllowExport": true,
@@ -7160,11 +7160,11 @@
         },
         "BoxShadow": {
           "$type": "Visiology.DashboardService.Modules.Dashboards.Domain.Models.Widget.BoxShadow, Visiology.DashboardService.Modules.Dashboards.Domain",
-          "X": 3,
-          "Y": 3,
+          "X": 0,
+          "Y": 0,
           "Blur": 0,
           "Spread": 0,
-          "Color": "rgb(109,211,200)"
+          "Color": "rgba(0,0,0,0)"
         },
         "ZIndex": 13,
         "AllowExport": true,

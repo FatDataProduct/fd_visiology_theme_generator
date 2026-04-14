@@ -1,10 +1,8 @@
 import React from 'react';
 import { Toaster } from 'react-hot-toast';
 import { TopBar } from './components/TopBar';
-import { ColorPanel } from './components/panels/ColorPanel';
 import { LivePreview } from './components/preview/LivePreview';
-import { PaletteBar } from './components/panels/PaletteBar';
-import { DetailStyler } from './components/panels/DetailStyler';
+import { BottomBar } from './components/panels/BottomBar';
 import { Footer } from './components/Footer';
 
 const App: React.FC = () => {
@@ -14,16 +12,21 @@ const App: React.FC = () => {
         position="top-right"
         toastOptions={{
           duration: 3000,
-          style: { fontFamily: 'Inter, sans-serif', fontSize: '13px' },
+          style: {
+            fontFamily: 'Inter, sans-serif',
+            fontSize: '12px',
+            background: 'rgba(20,20,35,0.95)',
+            color: 'rgba(255,255,255,0.9)',
+            border: '1px solid rgba(255,255,255,0.1)',
+            backdropFilter: 'blur(16px)',
+          },
         }}
       />
       <TopBar />
-      <div className="main-content">
-        <ColorPanel />
+      <div className="main-shell">
+        <BottomBar />
         <LivePreview />
-        <DetailStyler />
       </div>
-      <PaletteBar />
       <Footer />
     </div>
   );

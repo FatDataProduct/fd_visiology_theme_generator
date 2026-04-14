@@ -4,6 +4,7 @@ export const Footer: React.FC = () => (
   <div className="app-footer">
     <div className="app-footer__left">
       <span className="app-footer__title">FatData Visiology Theme Generator</span>
+      <div className="app-footer__sep" />
       <span className="app-footer__author">Автор и разработчик: Чжен Артём</span>
     </div>
     <a
