@@ -16,6 +16,7 @@ export type ThemeMode = 'light' | 'dark';
 export type PreviewBackground = 'white' | 'gray' | 'dark';
 export type DetailTab = 'shell' | 'chart' | 'table' | 'indicator' | 'filter';
 export type PreviewSheet = 1 | 2 | 3;
+export type MobileTab = 'preview' | 'colors' | 'styling' | 'palette';
 
 interface ThemeState {
   themeName: string;
@@ -35,6 +36,8 @@ interface ThemeState {
   activeDetailTab: DetailTab;
   activeSheet: PreviewSheet;
   isDirty: boolean;
+  mobileActiveTab: MobileTab;
+  mobileMenuOpen: boolean;
 
   setThemeName: (name: string) => void;
   setTheme: (theme: VisiologyTheme) => void;
@@ -56,6 +59,8 @@ interface ThemeState {
   setShowGrid: (show: boolean) => void;
   setActiveDetailTab: (tab: DetailTab) => void;
   setActiveSheet: (sheet: PreviewSheet) => void;
+  setMobileActiveTab: (tab: MobileTab) => void;
+  setMobileMenuOpen: (open: boolean) => void;
 
   updateWidgetBase: (path: string, value: unknown) => void;
   getExportTheme: () => VisiologyTheme;
@@ -131,6 +136,8 @@ export const useThemeStore = create<ThemeState>((set, get) => ({
   activeDetailTab: 'shell',
   activeSheet: 1,
   isDirty: false,
+  mobileActiveTab: 'preview',
+  mobileMenuOpen: false,
 
   setThemeName: (name) => set({ themeName: name, isDirty: true }),
   setTheme: (theme) => set({ theme, isDirty: true }),
@@ -245,6 +252,8 @@ export const useThemeStore = create<ThemeState>((set, get) => ({
   setShowGrid: (show) => set({ showGrid: show }),
   setActiveDetailTab: (tab) => set({ activeDetailTab: tab }),
   setActiveSheet: (sheet) => set({ activeSheet: sheet }),
+  setMobileActiveTab: (tab) => set({ mobileActiveTab: tab, mobileMenuOpen: false }),
+  setMobileMenuOpen: (open) => set({ mobileMenuOpen: open }),
 
   updateWidgetBase: (path, value) => {
     const { theme } = get();

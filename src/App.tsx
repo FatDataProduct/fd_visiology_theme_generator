@@ -1,31 +1,23 @@
 import React from 'react';
 import { Toaster } from 'react-hot-toast';
-import { TopBar } from './components/TopBar';
-import { ColorPanel } from './components/panels/ColorPanel';
-import { LivePreview } from './components/preview/LivePreview';
-import { PaletteBar } from './components/panels/PaletteBar';
-import { DetailStyler } from './components/panels/DetailStyler';
-import { Footer } from './components/Footer';
+import { useIsMobile } from './hooks/useIsMobile';
+import { DesktopLayout } from './layouts/DesktopLayout';
+import { MobileLayout } from './layouts/MobileLayout';
 
 const App: React.FC = () => {
+  const isMobile = useIsMobile();
+
   return (
-    <div className="app-layout">
+    <>
       <Toaster
-        position="top-right"
+        position={isMobile ? 'bottom-center' : 'top-right'}
         toastOptions={{
           duration: 3000,
           style: { fontFamily: 'Inter, sans-serif', fontSize: '13px' },
         }}
       />
-      <TopBar />
-      <div className="main-content">
-        <ColorPanel />
-        <LivePreview />
-        <DetailStyler />
-      </div>
-      <PaletteBar />
-      <Footer />
-    </div>
+      {isMobile ? <MobileLayout /> : <DesktopLayout />}
+    </>
   );
 };
 

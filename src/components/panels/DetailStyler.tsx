@@ -14,15 +14,20 @@ const TABS: { id: DetailTab; label: string }[] = [
   { id: 'filter', label: 'Filter' },
 ];
 
-export const DetailStyler: React.FC = () => {
+interface DetailStylerProps {
+  mobile?: boolean;
+}
+
+export const DetailStyler: React.FC<DetailStylerProps> = ({ mobile = false }) => {
   const { activeDetailTab, setActiveDetailTab } = useThemeStore();
 
   return (
-    <div className="panel-right">
-      <div className="detail-tabs">
+    <div className={`panel-right ${mobile ? 'panel-right--mobile' : ''}`}>
+      <div className={`detail-tabs ${mobile ? 'detail-tabs--mobile' : ''}`}>
         {TABS.map((tab) => (
           <button
             key={tab.id}
+            type="button"
             className={`detail-tab ${activeDetailTab === tab.id ? 'detail-tab--active' : ''}`}
             onClick={() => setActiveDetailTab(tab.id)}
           >
@@ -30,7 +35,7 @@ export const DetailStyler: React.FC = () => {
           </button>
         ))}
       </div>
-      <div className="detail-content">
+      <div className={`detail-content ${mobile ? 'detail-content--mobile' : ''}`}>
         {activeDetailTab === 'shell' && <WidgetShellTab />}
         {activeDetailTab === 'chart' && <ChartStylerTab />}
         {activeDetailTab === 'table' && <TableStylerTab />}
