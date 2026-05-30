@@ -59,7 +59,7 @@ export const TopBar: React.FC = () => {
           <path d="M2 17l10 5 10-5" />
           <path d="M2 12l10 5 10-5" />
         </svg>
-        <span>VTB</span>
+        <span>FatData Visiology Theme Generator</span>
       </div>
 
       <input
