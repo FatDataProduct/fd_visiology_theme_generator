@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
-import { Star, Lock, Unlock } from 'lucide-react';
 import { useThemeStore } from '../../store/themeStore';
-import { rgbaToHex, hexToRgba } from '../../lib/paletteGen';
+import { PaletteEditor } from './PaletteEditor';
 
 import { ThemeTab }     from './tabs/ThemeTab';
 import { WidgetShellTab }   from './tabs/WidgetShellTab';
@@ -23,13 +22,7 @@ const TABS: Array<{ id: BottomTab; label: string }> = [
 
 export const BottomBar: React.FC = () => {
   const [activeTab, setActiveTab] = useState<BottomTab>('theme');
-  const {
-    palette, updatePaletteColor,
-    seedIndex, setSeedIndex,
-    lockedIndices, toggleLock,
-    generatePalette,
-    resetToDefault,
-  } = useThemeStore();
+  const { resetToDefault } = useThemeStore();
 
   return (
     <div className="left-sidebar">
@@ -68,61 +61,7 @@ export const BottomBar: React.FC = () => {
         {activeTab === 'filter'    && <FilterStylerTab />}
       </div>
 
-      {/* Palette row */}
-      <div className="palette-row palette-row--sidebar">
-        {palette.map((color, index) => {
-          const hex = rgbaToHex(color.value);
-          const isSeed   = index === seedIndex;
-          const isLocked = lockedIndices.has(index);
-
-          return (
-            <div key={color.id} className="palette-slot">
-              <div
-                className={[
-                  'palette-slot__swatch',
-                  isSeed   && 'palette-slot__swatch--seed',
-                  isLocked && 'palette-slot__swatch--locked',
-                ].filter(Boolean).join(' ')}
-                style={{ backgroundColor: color.value }}
-              >
-                <input
-                  type="color"
-                  value={hex}
-                  onChange={(e) => updatePaletteColor(index, hexToRgba(e.target.value))}
-                />
-              </div>
-              <span className="palette-slot__hex">{hex.slice(0, 7)}</span>
-              <div className="palette-slot__icons">
-                <button
-                  className={`palette-slot__icon-btn ${isSeed ? 'palette-slot__icon-btn--active' : ''}`}
-                  onClick={() => setSeedIndex(index)}
-                  title="Сделать seed-цветом"
-                >
-                  <Star size={9} fill={isSeed ? 'currentColor' : 'none'} />
-                </button>
-                <button
-                  className={`palette-slot__icon-btn ${isLocked ? 'palette-slot__icon-btn--active' : ''}`}
-                  onClick={() => toggleLock(index)}
-                  title={isLocked ? 'Разблокировать' : 'Заблокировать'}
-                >
-                  {isLocked ? <Lock size={9} /> : <Unlock size={9} />}
-                </button>
-              </div>
-            </div>
-          );
-        })}
-
-        {/* Shuffle button */}
-        <div className="palette-row__actions palette-row__actions--sidebar">
-          <button
-            className="palette-row__btn palette-row__btn--accent"
-            onClick={generatePalette}
-            title="Сгенерировать новую вариацию"
-          >
-            ↻ Перемешать
-          </button>
-        </div>
-      </div>
+      <PaletteEditor layout="sidebar" />
     </div>
   );
 };

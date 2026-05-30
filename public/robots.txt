@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://chzhen.github.io/fd_visiology_theme_generator/sitemap.xml

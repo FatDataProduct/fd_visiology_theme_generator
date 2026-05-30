@@ -399,21 +399,6 @@ const DashHeader: React.FC = () => {
           Дашборд для отслеживания продаж офисной мебели
         </div>
       </div>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginRight: 16 }}>
-        <span style={{ fontSize: 10, color: s.axisLabelColor, fontWeight: 600 }}>Год</span>
-        <select
-          style={{
-            fontSize: 10,
-            padding: '2px 8px',
-            borderRadius: 3,
-            border: '1px solid rgba(0,0,0,0.15)',
-            background: 'transparent',
-            color: s.axisLabelColor,
-          }}
-        >
-          <option>(Multiple values)</option>
-        </select>
-      </div>
       <div
         style={{
           fontSize: 9,
@@ -421,14 +406,13 @@ const DashHeader: React.FC = () => {
           color: s.paletteColors[0],
           border: `2px solid ${s.paletteColors[0]}`,
           borderRadius: 3,
-          padding: '3px 6px',
-          lineHeight: 1.2,
+          padding: '3px 8px',
+          lineHeight: 1.4,
           textAlign: 'center',
+          letterSpacing: 0.5,
         }}
       >
-        <div style={{ fontSize: 10 }}>ВС·13</div>
-        <div style={{ fontSize: 7, letterSpacing: 1 }}>СТАНД</div>
-        <div style={{ fontSize: 7, letterSpacing: 1 }}>АРТ</div>
+        made by FD
       </div>
     </div>
   );
@@ -908,6 +892,107 @@ const AvgCheckChart: React.FC = () => {
 };
 
 /* ================================================================
+   CATEGORY PIE (donut)
+   ================================================================ */
+
+const CategoryPieChart: React.FC = () => {
+  const s = useWidgetStyles();
+  const pc = s.paletteColors;
+
+  const option = useMemo(
+    () => ({
+      series: [
+        {
+          type: 'pie',
+          radius: ['42%', '70%'],
+          center: ['50%', '55%'],
+          data: TOP_SALES.slice(0, 5).map((d, i) => ({
+            name: d.name,
+            value: d.value,
+            itemStyle: { color: pc[i % pc.length] },
+          })),
+          label: { show: false },
+          emphasis: { scale: false },
+        },
+      ],
+      legend: { show: false },
+      tooltip: {
+        trigger: 'item',
+        formatter: (p: { name: string; percent: number }) => `${p.name}: ${p.percent.toFixed(1)}%`,
+      },
+    }),
+    [pc],
+  );
+
+  return (
+    <WidgetCard title="Доля категорий" style={{ flex: 1 }}>
+      <EChart option={option} style={{ position: 'absolute', inset: 0 }} />
+    </WidgetCard>
+  );
+};
+
+/* ================================================================
+   SALES GAUGE
+   ================================================================ */
+
+const SalesGaugeChart: React.FC = () => {
+  const s = useWidgetStyles();
+  const pc = s.paletteColors;
+
+  const option = useMemo(
+    () => ({
+      series: [
+        {
+          type: 'gauge',
+          startAngle: 210,
+          endAngle: -30,
+          min: 0,
+          max: 100,
+          radius: '88%',
+          center: ['50%', '62%'],
+          progress: { show: true, width: 8, itemStyle: { color: pc[0] } },
+          axisLine: {
+            lineStyle: {
+              width: 8,
+              color: [[1, withAlpha(pc[0] || 'rgba(0,0,0,1)', 0.13)]],
+            },
+          },
+          axisTick: { show: false },
+          splitLine: { show: false },
+          axisLabel: { show: false },
+          anchor: { show: false },
+          pointer: { show: false },
+          detail: {
+            valueAnimation: false,
+            formatter: '{value}%',
+            color: s.titleColor,
+            fontSize: 16,
+            fontWeight: 700,
+            fontFamily: s.titleFont,
+            offsetCenter: [0, '5%'],
+          },
+          title: {
+            offsetCenter: [0, '50%'],
+            fontSize: 8,
+            color: s.axisLabelColor,
+            fontFamily: s.dataFont,
+          },
+          data: [{ value: 78, name: 'план' }],
+        },
+      ],
+      tooltip: { show: false },
+    }),
+    [pc, s.titleColor, s.titleFont, s.axisLabelColor, s.dataFont],
+  );
+
+  return (
+    <WidgetCard title="Выполнение плана" style={{ flex: 1 }}>
+      <EChart option={option} style={{ position: 'absolute', inset: 0 }} />
+    </WidgetCard>
+  );
+};
+
+/* ================================================================
    SPARKLINE SVG — tiny inline sparkline for table rows
    ================================================================ */
 
@@ -960,22 +1045,6 @@ const RegionsTable: React.FC = () => {
       title="Регионы"
       subtitle="Детальная таблица"
       style={{ flex: 1 }}
-      headerRight={
-        <div style={{ display: 'flex', gap: 6, fontSize: 8, flexShrink: 0 }}>
-          <div>
-            <span style={{ color: s.axisLabelColor, fontSize: 8 }}>Регион </span>
-            <select style={{ fontSize: 8, border: '1px solid rgba(0,0,0,0.15)', borderRadius: 2, padding: '1px 4px', background: 'transparent', color: s.titleColor }}>
-              <option>(All)</option>
-            </select>
-          </div>
-          <div>
-            <span style={{ color: s.axisLabelColor, fontSize: 8 }}>Категория </span>
-            <select style={{ fontSize: 8, border: '1px solid rgba(0,0,0,0.15)', borderRadius: 2, padding: '1px 4px', background: 'transparent', color: s.titleColor }}>
-              <option>(All)</option>
-            </select>
-          </div>
-        </div>
-      }
     >
       <div style={{ overflow: 'auto', height: '100%', padding: '0 4px 4px', border: `1px solid ${s.dgOuterBorderColor}`, borderRadius: s.frameRadius }}>
         <table style={{ width: '100%', borderCollapse: 'collapse', fontFamily: s.dataFont }}>
@@ -1045,7 +1114,11 @@ const EChartsSheet: React.FC = () => {
           <AvgCheckChart />
         </div>
         {/* Right column */}
-        <div style={{ width: 380, display: 'flex', flexDirection: 'column', flexShrink: 0 }}>
+        <div style={{ width: 380, display: 'flex', flexDirection: 'column', flexShrink: 0, gap: 6 }}>
+          <div style={{ height: 178, display: 'flex', gap: 6, flexShrink: 0 }}>
+            <CategoryPieChart />
+            <SalesGaugeChart />
+          </div>
           <RegionsTable />
         </div>
       </div>

@@ -5,7 +5,12 @@ import { HARMONY_LABELS, type HarmonyMethod } from '../../../lib/paletteGen';
 import type { VisiologyTheme } from '../../../types/visiology';
 import { importThemeFromJson, readFileAsText } from '../../../lib/importer';
 
-export const ThemeTab: React.FC = () => {
+type ThemeTabProps = {
+  variant?: 'desktop' | 'mobile';
+};
+
+export const ThemeTab: React.FC<ThemeTabProps> = ({ variant = 'desktop' }) => {
+  const isMobile = variant === 'mobile';
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [fetchStatus, setFetchStatus] = useState<'idle' | 'loading' | 'ok' | 'error'>('idle');
   const [fetchMsg, setFetchMsg] = useState('');
@@ -104,9 +109,9 @@ export const ThemeTab: React.FC = () => {
   const fonts = ['Arial', 'Open Sans', 'Roboto', 'Inter', 'Segoe UI', 'Helvetica'];
 
   return (
-    <>
+    <div className={isMobile ? 'theme-tab theme-tab--mobile' : 'theme-tab'}>
       {/* Palette section */}
-      <div className="detail-section" style={{ minWidth: 200 }}>
+      <div className={`detail-section ${isMobile ? 'detail-section--stacked' : ''}`} style={isMobile ? undefined : { minWidth: 200 }}>
         <div className="detail-section__title">Seed Color &amp; Harmony</div>
 
         <div className="detail-row">
@@ -144,17 +149,17 @@ export const ThemeTab: React.FC = () => {
         </div>
 
         <div className="detail-row">
-          <span className="detail-label">Size</span>
+          <span className="detail-label">Цветов</span>
           <div className="ctrl-stepper">
-            <button className="ctrl-stepper__btn" onClick={() => setPaletteSize(paletteSize - 1)}>−</button>
+            <button type="button" className="ctrl-stepper__btn" onClick={() => setPaletteSize(paletteSize - 1)}>−</button>
             <span className="ctrl-stepper__val">{paletteSize}</span>
-            <button className="ctrl-stepper__btn" onClick={() => setPaletteSize(paletteSize + 1)}>+</button>
+            <button type="button" className="ctrl-stepper__btn" onClick={() => setPaletteSize(paletteSize + 1)}>+</button>
           </div>
         </div>
       </div>
 
       {/* Refinement section */}
-      <div className="detail-section" style={{ minWidth: 210 }}>
+      <div className={`detail-section ${isMobile ? 'detail-section--stacked' : ''}`} style={isMobile ? undefined : { minWidth: 210 }}>
         <div className="detail-section__title" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <span>Refinement</span>
           <button
@@ -208,7 +213,7 @@ export const ThemeTab: React.FC = () => {
       </div>
 
       {/* Typography section */}
-      <div className="detail-section" style={{ minWidth: 200 }}>
+      <div className={`detail-section ${isMobile ? 'detail-section--stacked' : ''}`} style={isMobile ? undefined : { minWidth: 200 }}>
         <div className="detail-section__title">Typography</div>
 
         <div className="detail-row">
@@ -254,131 +259,166 @@ export const ThemeTab: React.FC = () => {
         </div>
       </div>
 
-      {/* VisAPI iframe section */}
-      <div className="detail-section" style={{ minWidth: 290 }}>
-        <div className="detail-section__title">VisAPI — просмотр дашборда</div>
+      {!isMobile && (
+        <div className="detail-section" style={{ minWidth: 290 }}>
+          <div className="detail-section__title">VisAPI — просмотр дашборда</div>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-          <span className="detail-label" style={{ fontSize: 9 }}>
-            URL дашборда Visiology (для просмотра в iframe)
-          </span>
-          <input
-            type="url"
-            className="detail-input"
-            value={visApiUrl}
-            placeholder="https://your-visapi-host/dashboard"
-            onChange={(e) => setVisApiUrl(e.target.value)}
-            style={{ width: '100%', textAlign: 'left', fontSize: 10, padding: '5px 7px', height: 28 }}
-          />
-          <div style={{ display: 'flex', gap: 6 }}>
-            <button
-              className="btn-sm btn-sm--primary"
-              onClick={() => setActiveSheet('visapi')}
-              style={{ flex: 1, padding: '5px 10px' }}
-            >
-              Открыть лист VisAPI
-            </button>
-            <button
-              className="btn-sm btn-sm--ghost"
-              onClick={() => setVisApiUrl('')}
-              style={{ padding: '5px 10px' }}
-            >
-              Очистить
-            </button>
-          </div>
-          {/* Explanation */}
-          <div style={{
-            background: 'rgba(255,200,50,0.08)',
-            border: '1px solid rgba(255,200,50,0.25)',
-            borderRadius: 6,
-            padding: '7px 9px',
-            fontSize: 9,
-            lineHeight: 1.6,
-            color: 'var(--text-muted)',
-          }}>
-            ⚠️ Iframe отображает дашборд статично — изменения темы в редакторе <b>не применяются</b> к нему автоматически
-            (Visiology VisAPI не поддерживает PostMessage для тем).<br />
-            <b>Правильный workflow:</b> настрой тему → Экспорт JSON → загрузи в Visiology.
-          </div>
-        </div>
-      </div>
-
-      {/* Import / Fetch theme section */}
-      <div className="detail-section" style={{ minWidth: 290 }}>
-        <div className="detail-section__title">Импорт темы из Visiology</div>
-
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-          {/* Auto-fetch via API */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
             <span className="detail-label" style={{ fontSize: 9 }}>
-              Автоматически — через REST API (нужна авторизация в браузере)
-            </span>
-            <button
-              className="btn-sm btn-sm--primary"
-              onClick={handleFetchFromApi}
-              disabled={fetchStatus === 'loading'}
-              style={{ padding: '6px 12px' }}
-            >
-              {fetchStatus === 'loading' ? '⏳ Загружаем...' : '⬇ Получить тему из Visiology API'}
-            </button>
-          </div>
-
-          {fetchMsg && (
-            <div style={{
-              padding: '6px 9px',
-              borderRadius: 5,
-              fontSize: 9,
-              lineHeight: 1.5,
-              background: fetchStatus === 'ok'
-                ? 'rgba(40,238,150,0.1)' : fetchStatus === 'error'
-                ? 'rgba(255,80,80,0.1)' : 'rgba(255,255,255,0.05)',
-              border: `1px solid ${fetchStatus === 'ok' ? 'rgba(40,238,150,0.3)' : fetchStatus === 'error' ? 'rgba(255,80,80,0.3)' : 'transparent'}`,
-              color: fetchStatus === 'ok' ? '#28ee96' : fetchStatus === 'error' ? '#ff8080' : 'var(--text-muted)',
-              wordBreak: 'break-word',
-            }}>
-              {fetchMsg}
-            </div>
-          )}
-
-          {/* Divider */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <div style={{ flex: 1, height: 1, background: 'var(--border)' }} />
-            <span style={{ fontSize: 9, color: 'var(--text-muted)' }}>или вручную</span>
-            <div style={{ flex: 1, height: 1, background: 'var(--border)' }} />
-          </div>
-
-          {/* Manual file import */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
-            <span className="detail-label" style={{ fontSize: 9 }}>
-              Загрузить JSON темы или JSON дашборда (с авто-извлечением темы)
+              URL дашборда Visiology (для просмотра в iframe)
             </span>
             <input
-              ref={fileInputRef}
-              type="file"
-              accept=".json,application/json"
-              style={{ display: 'none' }}
-              onChange={handleFileImport}
+              type="url"
+              className="detail-input"
+              value={visApiUrl}
+              placeholder="https://your-visapi-host/dashboard"
+              onChange={(e) => setVisApiUrl(e.target.value)}
+              style={{ width: '100%', textAlign: 'left', fontSize: 10, padding: '5px 7px', height: 28 }}
             />
-            <button
-              className="btn-sm btn-sm--ghost"
-              onClick={() => fileInputRef.current?.click()}
-              style={{ padding: '6px 12px' }}
-            >
-              📂 Загрузить JSON (theme/dashboard)
-            </button>
-          </div>
-
-          <div style={{
-            fontSize: 9,
-            color: 'var(--text-muted)',
-            lineHeight: 1.6,
-            padding: '4px 0',
-          }}>
-            Как получить JSON из Visiology: Admin Panel → Appearance → Themes → Экспорт / скачать.
-            Также можно загрузить экспорт дашборда: генератор попробует извлечь стили и цвета в редактируемую тему.
+            <div style={{ display: 'flex', gap: 6 }}>
+              <button
+                type="button"
+                className="btn-sm btn-sm--primary"
+                onClick={() => setActiveSheet('visapi')}
+                style={{ flex: 1, padding: '5px 10px' }}
+              >
+                Открыть лист VisAPI
+              </button>
+              <button
+                type="button"
+                className="btn-sm btn-sm--ghost"
+                onClick={() => setVisApiUrl('')}
+                style={{ padding: '5px 10px' }}
+              >
+                Очистить
+              </button>
+            </div>
+            <div style={{
+              background: 'rgba(255,200,50,0.08)',
+              border: '1px solid rgba(255,200,50,0.25)',
+              borderRadius: 6,
+              padding: '7px 9px',
+              fontSize: 9,
+              lineHeight: 1.6,
+              color: 'var(--text-muted)',
+            }}>
+              ⚠️ Iframe отображает дашборд статично — изменения темы в редакторе <b>не применяются</b> к нему автоматически
+              (Visiology VisAPI не поддерживает PostMessage для тем).<br />
+              <b>Правильный workflow:</b> настрой тему → Экспорт JSON → загрузи в Visiology.
+            </div>
           </div>
         </div>
-      </div>
-    </>
+      )}
+
+      {/* Import / Fetch theme section */}
+      {isMobile ? (
+        <details className="mobile-details">
+          <summary className="mobile-details__summary">Подключение к Visiology</summary>
+          <div className="detail-section detail-section--stacked">
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <span className="detail-label">URL сервера Visiology</span>
+              <input
+                type="url"
+                className="detail-input mobile-input"
+                value={visApiUrl}
+                placeholder="https://your-visiology-host"
+                onChange={(e) => setVisApiUrl(e.target.value)}
+              />
+              <button
+                type="button"
+                className="btn-sm btn-sm--primary mobile-btn-full"
+                onClick={handleFetchFromApi}
+                disabled={fetchStatus === 'loading'}
+              >
+                {fetchStatus === 'loading' ? '⏳ Загружаем...' : '⬇ Получить тему из API'}
+              </button>
+              {fetchMsg && (
+                <div className={`mobile-fetch-msg mobile-fetch-msg--${fetchStatus}`}>
+                  {fetchMsg}
+                </div>
+              )}
+              <p className="mobile-hint">
+                Импорт JSON — в меню ⋮ вверху экрана.
+              </p>
+            </div>
+          </div>
+        </details>
+      ) : (
+        <div className="detail-section" style={{ minWidth: 290 }}>
+          <div className="detail-section__title">Импорт темы из Visiology</div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+              <span className="detail-label" style={{ fontSize: 9 }}>
+                Автоматически — через REST API (нужна авторизация в браузере)
+              </span>
+              <button
+                type="button"
+                className="btn-sm btn-sm--primary"
+                onClick={handleFetchFromApi}
+                disabled={fetchStatus === 'loading'}
+                style={{ padding: '6px 12px' }}
+              >
+                {fetchStatus === 'loading' ? '⏳ Загружаем...' : '⬇ Получить тему из Visiology API'}
+              </button>
+            </div>
+
+            {fetchMsg && (
+              <div style={{
+                padding: '6px 9px',
+                borderRadius: 5,
+                fontSize: 9,
+                lineHeight: 1.5,
+                background: fetchStatus === 'ok'
+                  ? 'rgba(40,238,150,0.1)' : fetchStatus === 'error'
+                  ? 'rgba(255,80,80,0.1)' : 'rgba(255,255,255,0.05)',
+                border: `1px solid ${fetchStatus === 'ok' ? 'rgba(40,238,150,0.3)' : fetchStatus === 'error' ? 'rgba(255,80,80,0.3)' : 'transparent'}`,
+                color: fetchStatus === 'ok' ? '#28ee96' : fetchStatus === 'error' ? '#ff8080' : 'var(--text-muted)',
+                wordBreak: 'break-word',
+              }}>
+                {fetchMsg}
+              </div>
+            )}
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <div style={{ flex: 1, height: 1, background: 'var(--border)' }} />
+              <span style={{ fontSize: 9, color: 'var(--text-muted)' }}>или вручную</span>
+              <div style={{ flex: 1, height: 1, background: 'var(--border)' }} />
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+              <span className="detail-label" style={{ fontSize: 9 }}>
+                Загрузить JSON темы или JSON дашборда (с авто-извлечением темы)
+              </span>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".json,application/json"
+                style={{ display: 'none' }}
+                onChange={handleFileImport}
+              />
+              <button
+                type="button"
+                className="btn-sm btn-sm--ghost"
+                onClick={() => fileInputRef.current?.click()}
+                style={{ padding: '6px 12px' }}
+              >
+                📂 Загрузить JSON (theme/dashboard)
+              </button>
+            </div>
+
+            <div style={{
+              fontSize: 9,
+              color: 'var(--text-muted)',
+              lineHeight: 1.6,
+              padding: '4px 0',
+            }}>
+              Как получить JSON из Visiology: Admin Panel → Appearance → Themes → Экспорт / скачать.
+              Также можно загрузить экспорт дашборда: генератор попробует извлечь стили и цвета в редактируемую тему.
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
   );
 };

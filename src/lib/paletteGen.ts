@@ -124,7 +124,9 @@ function generateBaseColors(method: HarmonyMethod, seedH: number, seedS: number,
 
 /**
  * Generate palette from seed color, using specified harmony method.
- * Adds randomization so each call produces a different variation.
+ * The seed's hue/saturation is always the anchor; small random variation
+ * is applied so each "Shuffle" call produces a slightly different result
+ * while staying recognisably close to the seed.
  */
 export function generatePaletteFromSeed(
   seedHex: string,
@@ -137,20 +139,24 @@ export function generatePaletteFromSeed(
   const hsl = toHsl(parsed);
   if (!hsl) return getDefaultPaletteColors().slice(0, count);
 
-  const randomHueOffset = Math.random() * 360;
-  const randomSatBase = 0.55 + Math.random() * 0.35;
-  const randomLMid = 0.40 + Math.random() * 0.20;
+  const seedH = hsl.h ?? 0;
+  const seedS = hsl.s ?? 0.7;
+  const seedL = hsl.l ?? 0.5;
 
-  const h = ((hsl.h ?? 0) + randomHueOffset) % 360;
-  const s = randomSatBase;
+  // Small shuffle variation: ±15° hue, ±0.1 saturation, ±0.08 lightness mid-point
+  const hVariance = (Math.random() - 0.5) * 30;
+  const sVariance = (Math.random() - 0.5) * 0.2;
 
-  const baseColors = generateBaseColors(method, h, s, randomLMid, count);
+  const h = ((seedH + hVariance) + 360) % 360;
+  const s = clamp(seedS + sVariance, 0.25, 1.0);
+  // Keep lightness anchored near seed lightness (within ±0.1, clamped to usable range)
+  const lBase = clamp(seedL, 0.30, 0.70);
 
-  const roles = Array.from({ length: count }, (_, i) => `Color ${i + 1}`);
+  const baseColors = generateBaseColors(method, h, s, lBase, count);
 
   return baseColors.map((c, i) => ({
     id: generateId(),
-    role: roles[i],
+    role: `Color ${i + 1}`,
     value: hslToRgba(c.h, c.s, c.l),
   }));
 }

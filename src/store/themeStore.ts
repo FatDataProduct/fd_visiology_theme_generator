@@ -11,11 +11,13 @@ import {
   type RefinementValues,
   DEFAULT_REFINEMENT,
 } from '../lib/paletteGen';
+import { INITIAL_PALETTE_SIZE, MAX_PALETTE_SIZE, MIN_PALETTE_SIZE } from '../lib/previewConstants';
 
 export type ThemeMode = 'light' | 'dark';
 export type PreviewBackground = 'white' | 'gray' | 'dark';
 export type DetailTab = 'shell' | 'chart' | 'table' | 'indicator' | 'filter';
 export type PreviewSheet = 'echarts' | 'visapi';
+export type MobileTab = 'preview' | 'colors' | 'styling' | 'palette';
 
 const DEFAULT_VISAPI_URL = (import.meta.env.VITE_VISAPI_IFRAME_URL as string | undefined)?.trim() ?? '';
 
@@ -39,6 +41,8 @@ interface ThemeState {
   visApiUrl: string;
   visApiTargetOrigin: string;
   isDirty: boolean;
+  mobileActiveTab: MobileTab;
+  mobileMenuOpen: boolean;
 
   setThemeName: (name: string) => void;
   setTheme: (theme: VisiologyTheme) => void;
@@ -52,6 +56,7 @@ interface ThemeState {
   resetRefinement: () => void;
   toggleLock: (index: number) => void;
   generatePalette: () => void;
+  addPaletteSlot: () => void;
   setMode: (mode: ThemeMode) => void;
   toggleMode: () => void;
   setGlobalTokens: (tokens: Partial<GlobalTokens>) => void;
@@ -61,6 +66,8 @@ interface ThemeState {
   setActiveDetailTab: (tab: DetailTab) => void;
   setActiveSheet: (sheet: PreviewSheet) => void;
   setVisApiUrl: (url: string) => void;
+  setMobileActiveTab: (tab: MobileTab) => void;
+  setMobileMenuOpen: (open: boolean) => void;
 
   updateWidgetBase: (path: string, value: unknown) => void;
   getExportTheme: () => VisiologyTheme;
@@ -127,13 +134,17 @@ function getOriginFromUrl(url: string): string {
   }
 }
 
+const initialSeed = '#28EE96';
+const initialHarmony: HarmonyMethod = 'triadic';
+const initialPalette = generatePaletteFromSeed(initialSeed, initialHarmony, INITIAL_PALETTE_SIZE);
+
 export const useThemeStore = create<ThemeState>((set, get) => ({
   themeName: 'Энергия Visiology',
-  theme: getDefaultTheme(),
-  palette: DEFAULT_PALETTE_COLORS.map((c) => ({ ...c })),
-  seedColor: '#28EE96',
+  theme: syncPaletteToTheme(getDefaultTheme(), initialPalette, initialSeed),
+  palette: initialPalette,
+  seedColor: initialSeed,
   seedIndex: 0,
-  paletteSize: 10,
+  paletteSize: INITIAL_PALETTE_SIZE,
   harmonyMethod: 'triadic' as HarmonyMethod,
   refinement: { ...DEFAULT_REFINEMENT },
   lockedIndices: new Set<number>(),
@@ -147,6 +158,8 @@ export const useThemeStore = create<ThemeState>((set, get) => ({
   visApiUrl: DEFAULT_VISAPI_URL,
   visApiTargetOrigin: getOriginFromUrl(DEFAULT_VISAPI_URL),
   isDirty: false,
+  mobileActiveTab: 'preview',
+  mobileMenuOpen: false,
 
   setThemeName: (name) => set({ themeName: name, isDirty: true }),
   setTheme: (theme) => set({ theme, isDirty: true }),
@@ -176,9 +189,15 @@ export const useThemeStore = create<ThemeState>((set, get) => ({
   },
 
   setPaletteSize: (size) => {
-    const clamped = Math.max(3, Math.min(10, size));
+    const clamped = Math.max(MIN_PALETTE_SIZE, Math.min(MAX_PALETTE_SIZE, size));
     set({ paletteSize: clamped });
     get().generatePalette();
+  },
+
+  addPaletteSlot: () => {
+    const { paletteSize } = get();
+    if (paletteSize >= MAX_PALETTE_SIZE) return;
+    get().setPaletteSize(paletteSize + 1);
   },
 
   setHarmonyMethod: (method) => {
@@ -275,6 +294,9 @@ export const useThemeStore = create<ThemeState>((set, get) => ({
     });
   },
 
+  setMobileActiveTab: (tab) => set({ mobileActiveTab: tab, mobileMenuOpen: false }),
+  setMobileMenuOpen: (open) => set({ mobileMenuOpen: open }),
+
   updateWidgetBase: (path, value) => {
     const { theme } = get();
     const newTheme = applyToAllWidgets(theme, path, value);
@@ -310,9 +332,11 @@ export const useThemeStore = create<ThemeState>((set, get) => ({
       const luminance = (0.299 * +rgbMatch[1] + 0.587 * +rgbMatch[2] + 0.114 * +rgbMatch[3]);
       if (luminance < 128) detectedMode = 'dark';
     }
+    const paletteSize = Math.max(MIN_PALETTE_SIZE, Math.min(MAX_PALETTE_SIZE, palette.length));
     set({
       theme,
-      palette,
+      palette: palette.slice(0, paletteSize),
+      paletteSize,
       themeName: name,
       globalTokens: extractedTokens,
       isDirty: false,
@@ -323,13 +347,14 @@ export const useThemeStore = create<ThemeState>((set, get) => ({
   },
 
   resetToDefault: () => {
+    const palette = generatePaletteFromSeed(initialSeed, initialHarmony, INITIAL_PALETTE_SIZE);
     set({
-      theme: getDefaultTheme(),
-      palette: DEFAULT_PALETTE_COLORS.map((c) => ({ ...c })),
+      theme: syncPaletteToTheme(getDefaultTheme(), palette, initialSeed),
+      palette,
       themeName: 'Энергия Visiology',
-      seedColor: '#28EE96',
+      seedColor: initialSeed,
       seedIndex: 0,
-      paletteSize: 10,
+      paletteSize: INITIAL_PALETTE_SIZE,
       harmonyMethod: 'triadic',
       refinement: { ...DEFAULT_REFINEMENT },
       lockedIndices: new Set<number>(),

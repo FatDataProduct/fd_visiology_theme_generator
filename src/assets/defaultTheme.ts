@@ -3,6 +3,8 @@ import referenceThemeRaw from './referenceTheme.json';
 
 export const referenceTheme = referenceThemeRaw as unknown as VisiologyTheme;
 
+export const INITIAL_PALETTE_COUNT = 5;
+
 export const DEFAULT_PALETTE_COLORS = [
   { id: 'cb374a832342428cb43a0453a9b72566', role: 'Accent 1', value: 'rgba(40, 238, 150, 1)' },
   { id: '2abdb6d33c6d488ea6fd2c4cf523ca3c', role: 'Accent 2', value: 'rgba(255, 217, 0, 1)' },

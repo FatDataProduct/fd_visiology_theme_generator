@@ -1,0 +1,8 @@
+export const PREVIEW_DASHBOARD_WIDTH = 1200;
+export const PREVIEW_DASHBOARD_HEIGHT = 780;
+export const PREVIEW_MOBILE_PADDING = 12;
+export const PREVIEW_MOBILE_PILL_RESERVE = 56;
+
+export const INITIAL_PALETTE_SIZE = 5;
+export const MAX_PALETTE_SIZE = 10;
+export const MIN_PALETTE_SIZE = 2;
