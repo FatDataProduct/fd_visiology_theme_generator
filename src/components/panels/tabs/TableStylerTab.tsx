@@ -1,6 +1,7 @@
 import React from 'react';
 import { useThemeStore } from '../../../store/themeStore';
 import { rgbaToHex, hexToRgba } from '../../../lib/paletteGen';
+import { SizeSelect } from '../SizeSelect';
 
 const Toggle: React.FC<{ value: boolean; onChange: (v: boolean) => void }> = ({ value, onChange }) => (
   <div className={`detail-toggle ${value ? 'detail-toggle--on' : ''}`} onClick={() => onChange(!value)}>
@@ -54,13 +55,12 @@ export const TableStylerTab: React.FC = () => {
         </div>
         <div className="detail-row">
           <span className="detail-label">Font size</span>
-          <input
-            type="range" className="detail-slider" min={10} max={20}
+          <SizeSelect
+            min={10}
+            max={20}
             value={getVal(dgStyle, 'Header.TextStyle.FontSize', 15) as number}
-            onChange={(e) => updateWidgetBase('DataGridStyle.Header.TextStyle.FontSize', Number(e.target.value))}
-            style={{ width: '120px' }}
+            onChange={(v) => updateWidgetBase('DataGridStyle.Header.TextStyle.FontSize', v)}
           />
-          <span className="control-value">{getVal(dgStyle, 'Header.TextStyle.FontSize', 15) as number}px</span>
         </div>
       </div>
 
@@ -75,13 +75,12 @@ export const TableStylerTab: React.FC = () => {
         </div>
         <div className="detail-row">
           <span className="detail-label">Font size</span>
-          <input
-            type="range" className="detail-slider" min={10} max={20}
+          <SizeSelect
+            min={10}
+            max={20}
             value={getVal(dgStyle, 'Body.TextStyle.FontSize', 15) as number}
-            onChange={(e) => updateWidgetBase('DataGridStyle.Body.TextStyle.FontSize', Number(e.target.value))}
-            style={{ width: '120px' }}
+            onChange={(v) => updateWidgetBase('DataGridStyle.Body.TextStyle.FontSize', v)}
           />
-          <span className="control-value">{getVal(dgStyle, 'Body.TextStyle.FontSize', 15) as number}px</span>
         </div>
         <div className="detail-row">
           <span className="detail-label">Row alternation</span>

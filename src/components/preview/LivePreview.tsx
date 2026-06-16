@@ -1,6 +1,6 @@
 import React, { useRef } from 'react';
 import { Minus, Plus } from 'lucide-react';
-import { useThemeStore } from '../../store/themeStore';
+import { useThemeStore, type PreviewBackground } from '../../store/themeStore';
 import { DashboardPreview } from './DashboardPreview';
 import { useMobilePreviewScale } from '../../hooks/useMobilePreviewScale';
 
@@ -20,13 +20,12 @@ export const LivePreview: React.FC<LivePreviewProps> = ({ variant = 'desktop' })
     activeSheet, setActiveSheet,
   } = useThemeStore();
 
-  const bgOptions: Array<{ id: 'white' | 'gray' | 'dark'; color: string; title: string }> = [
-    { id: 'white', color: '#FFFFFF', title: 'Белый' },
-    { id: 'gray',  color: '#E8E8E8', title: 'Серый' },
-    { id: 'dark',  color: '#1E1E2E', title: 'Тёмный' },
+  const bgOptions: Array<{ id: PreviewBackground; color: string; title: string }> = [
+    { id: 'gray', color: '#E8E8E8', title: 'Серый' },
+    { id: 'dark', color: '#1E1E2E', title: 'Тёмный' },
   ];
 
-  const bgColor = bgOptions.find((b) => b.id === previewBackground)?.color ?? '#FFFFFF';
+  const bgColor = bgOptions.find((b) => b.id === previewBackground)?.color ?? '#E8E8E8';
 
   // Final render scale = autoFit × user multiplier
   const displayScale = Math.round(autoFitScale * (previewScale / 100));

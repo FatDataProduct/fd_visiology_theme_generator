@@ -1,6 +1,7 @@
 import React from 'react';
 import { useThemeStore } from '../../../store/themeStore';
 import { rgbaToHex, hexToRgba } from '../../../lib/paletteGen';
+import { SizeSelect } from '../SizeSelect';
 
 const Toggle: React.FC<{ value: boolean; onChange: (v: boolean) => void }> = ({ value, onChange }) => (
   <div className={`detail-toggle ${value ? 'detail-toggle--on' : ''}`} onClick={() => onChange(!value)}>
@@ -70,13 +71,12 @@ export const ChartStylerTab: React.FC = () => {
         </div>
         <div className="detail-row">
           <span className="detail-label">Label size</span>
-          <input
-            type="range" className="detail-slider" min={8} max={18}
+          <SizeSelect
+            min={8}
+            max={18}
             value={getVal(yAxis, 'Labels.TextStyle.FontSize', 12) as number}
-            onChange={(e) => updateWidgetBase('YAxis.Labels.TextStyle.FontSize', Number(e.target.value))}
-            style={{ width: '120px' }}
+            onChange={(v) => updateWidgetBase('YAxis.Labels.TextStyle.FontSize', v)}
           />
-          <span className="control-value">{getVal(yAxis, 'Labels.TextStyle.FontSize', 12) as number}px</span>
         </div>
         <div className="detail-row">
           <span className="detail-label">Grid</span>
@@ -112,13 +112,12 @@ export const ChartStylerTab: React.FC = () => {
         </div>
         <div className="detail-row">
           <span className="detail-label">Label size</span>
-          <input
-            type="range" className="detail-slider" min={8} max={18}
+          <SizeSelect
+            min={8}
+            max={18}
             value={getVal(xAxis, 'Labels.TextStyle.FontSize', 12) as number}
-            onChange={(e) => updateWidgetBase('XAxis.Labels.TextStyle.FontSize', Number(e.target.value))}
-            style={{ width: '120px' }}
+            onChange={(v) => updateWidgetBase('XAxis.Labels.TextStyle.FontSize', v)}
           />
-          <span className="control-value">{getVal(xAxis, 'Labels.TextStyle.FontSize', 12) as number}px</span>
         </div>
         <div className="detail-row">
           <span className="detail-label">Rotation</span>
@@ -154,13 +153,12 @@ export const ChartStylerTab: React.FC = () => {
         </div>
         <div className="detail-row">
           <span className="detail-label">Font size</span>
-          <input
-            type="range" className="detail-slider" min={8} max={18}
+          <SizeSelect
+            min={8}
+            max={18}
             value={getVal(legend, 'TextStyle.FontSize', 12) as number}
-            onChange={(e) => updateWidgetBase('Legend.TextStyle.FontSize', Number(e.target.value))}
-            style={{ width: '120px' }}
+            onChange={(v) => updateWidgetBase('Legend.TextStyle.FontSize', v)}
           />
-          <span className="control-value">{getVal(legend, 'TextStyle.FontSize', 12) as number}px</span>
         </div>
         <div className="detail-row">
           <span className="detail-label">Position</span>

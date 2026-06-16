@@ -1,13 +1,14 @@
 import React, { useRef } from 'react';
 import { Upload, Download, Shuffle, Sun, Moon } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { useThemeStore } from '../store/themeStore';
+import { useThemeStore, DEFAULT_THEME_NAME } from '../store/themeStore';
 import { importThemeFromJson, readFileAsText } from '../lib/importer';
 import { validateTheme, downloadTheme } from '../lib/exporter';
+import { ThemeNameEditor } from './ThemeNameEditor';
 
 export const TopBar: React.FC = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const { mode, toggleMode, getExportTheme, importTheme, generatePalette, themeName, setThemeName } = useThemeStore();
+  const { mode, toggleMode, getExportTheme, importTheme, generatePalette, themeName } = useThemeStore();
 
   const handleImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -37,7 +38,7 @@ export const TopBar: React.FC = () => {
     if (errors.length > 0) {
       toast.error(`Validation issues:\n${errors.slice(0, 3).join('\n')}`);
     }
-    downloadTheme(theme, themeName || 'visiology-theme');
+    downloadTheme(theme, themeName || DEFAULT_THEME_NAME);
     toast.success('Theme exported!');
   };
 
@@ -55,26 +56,8 @@ export const TopBar: React.FC = () => {
         <span className="top-bar__title">FatData Visiology Theme Generator</span>
       </div>
 
-      {/* Theme name input */}
-      <input
-        type="text"
-        style={{
-          background: 'rgba(255,255,255,0.05)',
-          border: '1px solid rgba(255,255,255,0.1)',
-          borderRadius: 6,
-          color: 'rgba(255,255,255,0.7)',
-          fontSize: 11,
-          padding: '4px 10px',
-          width: 180,
-          outline: 'none',
-          transition: 'border-color 0.15s',
-        }}
-        placeholder="Название темы"
-        value={themeName}
-        onChange={(e) => setThemeName(e.target.value)}
-        onFocus={(e) => (e.target.style.borderColor = 'rgba(40,238,150,0.5)')}
-        onBlur={(e) => (e.target.style.borderColor = 'rgba(255,255,255,0.1)')}
-      />
+      {/* Theme name */}
+      <ThemeNameEditor variant="desktop" />
 
       <div className="top-bar__spacer" />
 

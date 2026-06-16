@@ -1,6 +1,7 @@
 import React from 'react';
 import { useThemeStore } from '../../../store/themeStore';
 import { rgbaToHex, hexToRgba } from '../../../lib/paletteGen';
+import { SizeSelect } from '../SizeSelect';
 
 const Toggle: React.FC<{ value: boolean; onChange: (v: boolean) => void }> = ({ value, onChange }) => (
   <div
@@ -87,17 +88,13 @@ export const WidgetShellTab: React.FC = () => {
         </div>
 
         <div className="detail-row">
-          <span className="detail-label">Size</span>
-          <input
-            type="range"
-            className="detail-slider"
+          <span className="detail-label">Font size</span>
+          <SizeSelect
             min={12}
             max={32}
             value={globalTokens.titleFontSize}
-            onChange={(e) => setGlobalTokens({ titleFontSize: Number(e.target.value) })}
-            style={{ width: '120px' }}
+            onChange={(v) => setGlobalTokens({ titleFontSize: v })}
           />
-          <span className="control-value">{globalTokens.titleFontSize}px</span>
         </div>
 
         <div className="detail-row">
@@ -149,16 +146,13 @@ export const WidgetShellTab: React.FC = () => {
 
         <div className="detail-row">
           <span className="detail-label">Title height</span>
-          <input
-            type="range"
-            className="detail-slider"
+          <SizeSelect
             min={30}
             max={80}
+            step={5}
             value={titleHeight}
-            onChange={(e) => updateWidgetBase('Title.Size.Height', Number(e.target.value))}
-            style={{ width: '120px' }}
+            onChange={(v) => updateWidgetBase('Title.Size.Height', v)}
           />
-          <span className="control-value">{titleHeight}px</span>
         </div>
       </div>
 
@@ -181,16 +175,12 @@ export const WidgetShellTab: React.FC = () => {
 
         <div className="detail-row">
           <span className="detail-label">Border radius</span>
-          <input
-            type="range"
-            className="detail-slider"
+          <SizeSelect
             min={0}
             max={16}
             value={globalTokens.borderRadius}
-            onChange={(e) => setGlobalTokens({ borderRadius: Number(e.target.value) })}
-            style={{ width: '120px' }}
+            onChange={(v) => setGlobalTokens({ borderRadius: v })}
           />
-          <span className="control-value">{globalTokens.borderRadius}px</span>
         </div>
       </div>
 

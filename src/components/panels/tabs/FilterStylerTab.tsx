@@ -1,6 +1,7 @@
 import React from 'react';
 import { useThemeStore } from '../../../store/themeStore';
 import { rgbaToHex, hexToRgba } from '../../../lib/paletteGen';
+import { SizeSelect } from '../SizeSelect';
 
 const Toggle: React.FC<{ value: boolean; onChange: (v: boolean) => void }> = ({ value, onChange }) => (
   <div className={`detail-toggle ${value ? 'detail-toggle--on' : ''}`} onClick={() => onChange(!value)}>
@@ -60,13 +61,12 @@ export const FilterStylerTab: React.FC = () => {
         </div>
         <div className="detail-row">
           <span className="detail-label">Font size</span>
-          <input
-            type="range" className="detail-slider" min={10} max={18}
+          <SizeSelect
+            min={10}
+            max={18}
             value={getVal(filterWidget, 'FilterTextStyle.FontSize', 14) as number}
-            onChange={(e) => updateWidgetBase('FilterTextStyle.FontSize', Number(e.target.value))}
-            style={{ width: '120px' }}
+            onChange={(v) => updateWidgetBase('FilterTextStyle.FontSize', v)}
           />
-          <span className="control-value">{getVal(filterWidget, 'FilterTextStyle.FontSize', 14) as number}px</span>
         </div>
         <div className="detail-row">
           <span className="detail-label">Reset selection</span>

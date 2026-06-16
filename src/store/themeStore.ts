@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import type { VisiologyTheme, PaletteColor, GlobalTokens } from '../types/visiology';
 import { getDefaultTheme, DEFAULT_PALETTE_COLORS } from '../assets/defaultTheme';
 import { applyPaletteToTheme } from '../lib/exporter';
-import { reversePalette } from '../lib/darkReverse';
+import { reversePalette, reverseThemeColors } from '../lib/darkReverse';
 import {
   generatePaletteFromSeed,
   applyRefinement,
@@ -14,12 +14,13 @@ import {
 import { INITIAL_PALETTE_SIZE, MAX_PALETTE_SIZE, MIN_PALETTE_SIZE } from '../lib/previewConstants';
 
 export type ThemeMode = 'light' | 'dark';
-export type PreviewBackground = 'white' | 'gray' | 'dark';
+export type PreviewBackground = 'gray' | 'dark';
 export type DetailTab = 'shell' | 'chart' | 'table' | 'indicator' | 'filter';
 export type PreviewSheet = 'echarts' | 'visapi';
 export type MobileTab = 'preview' | 'colors' | 'styling' | 'palette';
 
 const DEFAULT_VISAPI_URL = (import.meta.env.VITE_VISAPI_IFRAME_URL as string | undefined)?.trim() ?? '';
+export const DEFAULT_THEME_NAME = 'FatData-Visiology Theme';
 
 interface ThemeState {
   themeName: string;
@@ -139,7 +140,7 @@ const initialHarmony: HarmonyMethod = 'triadic';
 const initialPalette = generatePaletteFromSeed(initialSeed, initialHarmony, INITIAL_PALETTE_SIZE);
 
 export const useThemeStore = create<ThemeState>((set, get) => ({
-  themeName: 'Энергия Visiology',
+  themeName: DEFAULT_THEME_NAME,
   theme: syncPaletteToTheme(getDefaultTheme(), initialPalette, initialSeed),
   palette: initialPalette,
   seedColor: initialSeed,
@@ -151,7 +152,7 @@ export const useThemeStore = create<ThemeState>((set, get) => ({
   mode: 'light',
   globalTokens: { ...DEFAULT_GLOBAL_TOKENS },
   previewScale: 100,
-  previewBackground: 'white',
+  previewBackground: 'gray',
   showGrid: false,
   activeDetailTab: 'shell',
   activeSheet: 'echarts',
@@ -257,16 +258,17 @@ export const useThemeStore = create<ThemeState>((set, get) => ({
     const newMode = mode === 'light' ? 'dark' : 'light';
     const newPalette = reversePalette(palette);
 
-    let newTheme = JSON.parse(JSON.stringify(theme)) as VisiologyTheme;
+    // Deep-reverse every color field (axes, legend, table, KPI, filter,
+    // borders, shadows, titles, ...). ColorPalette is skipped and re-synced below.
+    let newTheme = reverseThemeColors(theme);
     newTheme = syncPaletteToTheme(newTheme, newPalette, seedColor);
 
+    // Aesthetic override of the widget canvas background per mode: a soft navy
+    // in dark, transparent in light (instead of a harsh pure-black mirror).
     newTheme.WidgetStyles.$values.forEach((widget) => {
-      if (newMode === 'dark') {
-        if (widget.Background?.Color) widget.Background.Color.Color = 'rgba(30,30,46,0.95)';
-        if (widget.Title?.TextStyle) widget.Title.TextStyle.Color = 'rgba(255,255,255,1)';
-      } else {
-        if (widget.Background?.Color) widget.Background.Color.Color = 'rgba(255,255,255,0)';
-        if (widget.Title?.TextStyle) widget.Title.TextStyle.Color = 'rgba(0,0,0,1)';
+      if (widget.Background?.Color) {
+        widget.Background.Color.Color =
+          newMode === 'dark' ? 'rgba(30,30,46,0.95)' : 'rgba(255,255,255,0)';
       }
     });
 
@@ -351,7 +353,7 @@ export const useThemeStore = create<ThemeState>((set, get) => ({
     set({
       theme: syncPaletteToTheme(getDefaultTheme(), palette, initialSeed),
       palette,
-      themeName: 'Энергия Visiology',
+      themeName: DEFAULT_THEME_NAME,
       seedColor: initialSeed,
       seedIndex: 0,
       paletteSize: INITIAL_PALETTE_SIZE,

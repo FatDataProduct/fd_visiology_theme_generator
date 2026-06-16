@@ -54,7 +54,7 @@ export const PaletteEditor: React.FC<PaletteEditorProps> = ({ layout = 'sidebar'
                 onClick={() => setSeedIndex(index)}
                 title="Сделать seed-цветом"
               >
-                <Star size={layout === 'grid' ? 12 : 9} fill={isSeed ? 'currentColor' : 'none'} />
+                <Star size={layout === 'grid' ? 12 : 10} fill={isSeed ? 'currentColor' : 'none'} />
               </button>
               <button
                 type="button"
@@ -62,7 +62,7 @@ export const PaletteEditor: React.FC<PaletteEditorProps> = ({ layout = 'sidebar'
                 onClick={() => toggleLock(index)}
                 title={isLocked ? 'Разблокировать' : 'Заблокировать'}
               >
-                {isLocked ? <Lock size={layout === 'grid' ? 12 : 9} /> : <Unlock size={layout === 'grid' ? 12 : 9} />}
+                {isLocked ? <Lock size={layout === 'grid' ? 12 : 10} /> : <Unlock size={layout === 'grid' ? 12 : 10} />}
               </button>
             </div>
           </div>

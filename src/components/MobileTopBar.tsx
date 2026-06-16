@@ -1,15 +1,16 @@
 import React, { useEffect, useRef } from 'react';
 import { Download, MoreVertical, RotateCcw, Sun, Moon, Upload, Shuffle } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { useThemeStore } from '../store/themeStore';
+import { useThemeStore, DEFAULT_THEME_NAME } from '../store/themeStore';
 import { importThemeFromJson, readFileAsText } from '../lib/importer';
 import { validateTheme, downloadTheme } from '../lib/exporter';
+import { ThemeNameEditor } from './ThemeNameEditor';
 
 export const MobileTopBar: React.FC = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
   const {
-    themeName, setThemeName, mode, toggleMode,
+    themeName, mode, toggleMode,
     getExportTheme, importTheme, resetToDefault,
     mobileMenuOpen, setMobileMenuOpen, generatePalette,
   } = useThemeStore();
@@ -62,7 +63,7 @@ export const MobileTopBar: React.FC = () => {
       toast.error(`Validation issues:\n${errors.slice(0, 3).join('\n')}`);
     }
 
-    const fileName = themeName || 'visiology-theme';
+    const fileName = themeName || DEFAULT_THEME_NAME;
     downloadTheme(theme, fileName);
     toast.success('Theme exported!');
     setMobileMenuOpen(false);
@@ -150,13 +151,7 @@ export const MobileTopBar: React.FC = () => {
         </div>
       </div>
 
-      <input
-        type="text"
-        className="mobile-top-bar__name-input"
-        placeholder="Название темы"
-        value={themeName}
-        onChange={(e) => setThemeName(e.target.value)}
-      />
+      <ThemeNameEditor variant="mobile" />
 
       <input
         ref={fileInputRef}
